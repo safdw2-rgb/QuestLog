@@ -1,5 +1,5 @@
-import { HeroPanel } from "@/components/adventurer/HeroPanel";
-import { QuestList } from "@/components/quest/QuestList";
+import { AppHeader } from "@/components/layout/AppHeader";
+import { QuestDashboard } from "@/components/quest/QuestDashboard";
 import { getAdventurer, getQuests } from "@/lib/api";
 
 const DEFAULT_ADVENTURER_ID = 1;
@@ -20,14 +20,7 @@ export default async function HomePage() {
 
   return (
     <main className="mx-auto min-h-screen max-w-6xl px-4 py-6 md:px-8 md:py-10">
-      <header className="mb-8 text-center md:mb-10">
-        <p className="text-xs uppercase tracking-[0.35em] text-ink-muted">
-          Квестовый дневник
-        </p>
-        <h1 className="mt-2 font-display text-4xl text-ink md:text-5xl">
-          QuestLog
-        </h1>
-      </header>
+      <AppHeader />
 
       {error ? (
         <div className="journal-panel border-rose-300/50 bg-rose-50/80 p-6 text-center text-rose-900">
@@ -39,15 +32,11 @@ export default async function HomePage() {
         </div>
       ) : (
         adventurer && (
-          <div className="grid gap-6 lg:grid-cols-[minmax(260px,300px)_1fr] lg:gap-8">
-            <HeroPanel adventurer={adventurer} />
-            <section>
-              <h2 className="mb-4 font-display text-2xl text-ink">
-                Журнал заданий
-              </h2>
-              <QuestList quests={quests} />
-            </section>
-          </div>
+          <QuestDashboard
+            initialAdventurer={adventurer}
+            initialQuests={quests}
+            adventurerId={DEFAULT_ADVENTURER_ID}
+          />
         )
       )}
     </main>

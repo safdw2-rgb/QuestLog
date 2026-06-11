@@ -1,11 +1,61 @@
+import logging
+from contextlib import asynccontextmanager
+from zoneinfo import ZoneInfo
+
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.interval import IntervalTrigger
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.adventurers import router as adventurers_router
 from app.api.quests import router as quests_router
+from app.api.rewards import router as rewards_router
 from app.config import settings
+from app.services.daily_quest_reset import reset_daily_quests
+from app.services.quest_reminders import check_quest_reminders
 
-app = FastAPI(title=settings.app_title, version=settings.app_version)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(levelname)-5s [%(name)s] %(message)s",
+)
+
+logger = logging.getLogger(__name__)
+scheduler = AsyncIOScheduler()
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    tz = ZoneInfo(settings.daily_reset_timezone)
+    scheduler.add_job(
+        reset_daily_quests,
+        CronTrigger(hour=0, minute=0, timezone=tz),
+        id="daily_quest_reset",
+        replace_existing=True,
+        misfire_grace_time=3600,
+    )
+    scheduler.add_job(
+        check_quest_reminders,
+        IntervalTrigger(minutes=1),
+        id="quest_reminders",
+        replace_existing=True,
+        misfire_grace_time=120,
+    )
+    scheduler.start()
+    logger.info(
+        "Schedulers started: daily reset 00:00 %s, Telegram reminders every 1 min",
+        settings.daily_reset_timezone,
+    )
+    yield
+    scheduler.shutdown(wait=False)
+    logger.info("Daily quest scheduler stopped")
+
+
+app = FastAPI(
+    title=settings.app_title,
+    version=settings.app_version,
+    lifespan=lifespan,
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -20,6 +70,7 @@ app.add_middleware(
 
 app.include_router(quests_router, prefix="/api/v1")
 app.include_router(adventurers_router, prefix="/api/v1")
+app.include_router(rewards_router, prefix="/api/v1")
 
 
 @app.get("/health")

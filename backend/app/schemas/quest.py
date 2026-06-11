@@ -4,6 +4,7 @@ from typing import Annotated
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
 
 from app.models.enums import QuestDifficulty, QuestStatus, QuestType
+from app.schemas.adventurer import AdventurerRead
 
 
 def validate_foreign_keys(value: object) -> int | None:
@@ -48,6 +49,23 @@ class QuestStatusUpdate(BaseModel):
     fail_reason: str | None = None
 
 
+class QuestDeadlineUpdate(BaseModel):
+    deadline: OptionalDeadline = None
+
+
+class QuestAiGenerateRequest(BaseModel):
+    title: str = Field(min_length=1, max_length=200)
+
+
+class QuestAiGenerateResponse(BaseModel):
+    description: str
+    quest_type: QuestType
+    difficulty: QuestDifficulty
+    xp_reward: int = Field(ge=0)
+    gold_reward: int = Field(ge=0)
+    source: str = Field(description="openrouter или fallback")
+
+
 class QuestRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -73,3 +91,9 @@ class QuestRead(BaseModel):
     sort_order: int
     created_at: datetime
     updated_at: datetime
+
+
+class QuestDeadlineUpdateResponse(BaseModel):
+    quest: QuestRead
+    adventurer: AdventurerRead
+    gold_spent: int = Field(default=0, ge=0)

@@ -1,0 +1,45 @@
+---
+id: 2
+title: "Успешно выполнить тестирование"
+status: completed
+quest_type: side
+difficulty: normal
+xp_reward: 0
+gold_reward: 0
+xp_earned: 0
+gold_earned: 0
+adventurer_id: 1
+adventurer_level: 4
+created_at: 2026-06-11T16:55:18.258006+00:00
+started_at: 2026-06-11T16:55:18.258006+00:00
+completed_at: 2026-06-11T18:40:08.175322+00:00
+failed_at: null
+deadline: 2026-06-11T16:54:59.160000+00:00
+fail_reason: null
+tags:
+  - questlog
+  - status/completed
+---
+
+# Успешно выполнить тестирование
+
+> Статус: **✅ Выполнен** · Тип: `side` · Сложность: `normal`
+
+## Описание
+
+string
+
+## Награды
+
+- XP: **0** (заработано: 0)
+- Золото: **0** (заработано: 0)
+
+## Связи
+
+- [[Quest]]
+- [[Adventurer]]
+- [[Economy]]
+
+## Итог
+
+Квест завершён 2026-06-11T18:40:08.175322+00:00.

@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "QuestStep.md",
+                "file": "Quests/quest-10.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "QuestStep"
+              "title": "quest-10"
             }
           }
         ]
@@ -94,7 +94,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "QuestStep.md",
+                "file": "Quests/quest-10.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -104,7 +104,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Зворотні посилання для QuestStep"
+              "title": "Зворотні посилання для quest-10"
             }
           },
           {
@@ -113,12 +113,12 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "QuestStep.md",
+                "file": "Quests/quest-10.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Вихідні посилання з QuestStep"
+              "title": "Вихідні посилання з quest-10"
             }
           },
           {
@@ -156,13 +156,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "QuestStep.md",
+                "file": "Quests/quest-10.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Вміст QuestStep"
+              "title": "Вміст quest-10"
             }
           }
         ]
@@ -183,16 +183,34 @@
       "bases:Створити нову базу": false
     }
   },
-  "active": "daf74e5db434a735",
+  "active": "58aba4bd8a922c81",
   "lastOpenFiles": [
-    "QuestLog.md",
-    "Quest.md",
-    "Location.md",
-    "JournalEntry.md",
-    "Faction.md",
-    "ER-диаграмма.md",
-    "Economy.md",
-    "Adventurer.md",
-    "Achievement.md"
+    "Quests/quest-31.md",
+    "Quests/quest-30.md",
+    "Quests/quest-29.md",
+    "Quests/quest-28.md",
+    "Quests/quest-27.md",
+    "Quests/quest-26.md",
+    "Quests/quest-25.md",
+    "Quests/quest-24.md",
+    "Quests/quest-23.md",
+    "Quests/quest-22.md",
+    "Quests/quest-21.md",
+    "Quests/quest-20.md",
+    "Quests/quest-19.md",
+    "Quests/quest-18.md",
+    "Quests/quest-17.md",
+    "Quests/quest-1.md",
+    "Quests/quest-2.md",
+    "Quests/quest-5.md",
+    "Quests/quest-16.md",
+    "Quests/quest-15.md",
+    "Quests/quest-8.md",
+    "Quests/quest-14.md",
+    "QuestStep.md",
+    "Quests/quest-13.md",
+    "Quests/quest-12.md",
+    "Quests/quest-11.md",
+    "Quests"
   ]
 }

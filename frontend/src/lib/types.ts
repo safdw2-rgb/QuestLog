@@ -32,6 +32,28 @@ export interface Adventurer {
   updated_at: string;
 }
 
+export interface Reward {
+  id: number;
+  title: string;
+  cost: number;
+  description: string | null;
+  icon: string;
+}
+
+export interface RewardPurchaseResult {
+  reward: Reward;
+  adventurer: Adventurer;
+  message: string;
+}
+
+export interface QuestDeadlineUpdateResult {
+  quest: Quest;
+  adventurer: Adventurer;
+  gold_spent: number;
+}
+
+export const DEADLINE_RESCHEDULE_COST = 20;
+
 export interface Quest {
   id: number;
   adventurer_id: number;

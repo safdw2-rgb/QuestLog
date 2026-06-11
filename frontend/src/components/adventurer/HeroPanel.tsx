@@ -39,7 +39,7 @@ export function HeroPanel({ adventurer }: HeroPanelProps) {
         </div>
         <div className="h-2.5 overflow-hidden rounded-full bg-parchment-dark/60">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-gold-dim to-gold transition-all"
+            className="h-full rounded-full bg-gradient-to-r from-gold-dim to-gold transition-all duration-500 ease-out"
             style={{ width: `${progress}%` }}
           />
         </div>

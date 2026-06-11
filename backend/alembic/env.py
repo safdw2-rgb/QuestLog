@@ -15,7 +15,9 @@ from app.models import (  # noqa: F401 — регистрация моделей
     JournalEntry,
     Location,
     Quest,
+    QuestNotificationSent,
     QuestStep,
+    Reward,
 )
 
 config = context.config
