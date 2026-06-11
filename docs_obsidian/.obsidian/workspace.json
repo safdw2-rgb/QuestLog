@@ -1,0 +1,198 @@
+{
+  "main": {
+    "id": "f2a994b325756df5",
+    "type": "split",
+    "children": [
+      {
+        "id": "9ebc833a6d9ecc3d",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "daf74e5db434a735",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "QuestStep.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "QuestStep"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "a4a0f9d98ca2618c",
+    "type": "split",
+    "children": [
+      {
+        "id": "cc2974b7c529bc99",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "58aba4bd8a922c81",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Файловий менеджер"
+            }
+          },
+          {
+            "id": "71331f7ce5836f24",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Пошук"
+            }
+          },
+          {
+            "id": "8cf2ab4775338ad7",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Закладки"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "f32cd98e065737e8",
+    "type": "split",
+    "children": [
+      {
+        "id": "e51574cef57f22ee",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "69ce3a6b4001d6f9",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "QuestStep.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Зворотні посилання для QuestStep"
+            }
+          },
+          {
+            "id": "794e3e4544608ae2",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "QuestStep.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Вихідні посилання з QuestStep"
+            }
+          },
+          {
+            "id": "a48af94d5cc26d38",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Мітки"
+            }
+          },
+          {
+            "id": "9bc09a95e4935211",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "Всі властивості"
+            }
+          },
+          {
+            "id": "a872773f93412d41",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "QuestStep.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Вміст QuestStep"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Відкрити провідник файлів": false,
+      "graph:Граф": false,
+      "canvas:Створити нове полотно": false,
+      "daily-notes:Сьогоднішня нотатка": false,
+      "templates:Вставити шаблон": false,
+      "command-palette:Відкрити меню команд": false,
+      "bases:Створити нову базу": false
+    }
+  },
+  "active": "daf74e5db434a735",
+  "lastOpenFiles": [
+    "QuestLog.md",
+    "Quest.md",
+    "Location.md",
+    "JournalEntry.md",
+    "Faction.md",
+    "ER-диаграмма.md",
+    "Economy.md",
+    "Adventurer.md",
+    "Achievement.md"
+  ]
+}

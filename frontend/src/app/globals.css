@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+  --font-body: "Segoe UI", system-ui, sans-serif;
+
+  --color-parchment: #f4e8c8;
+  --color-parchment-dark: #e8d5a8;
+  --color-ink: #2c1810;
+  --color-ink-muted: #6b5344;
+  --color-gold: #b8860b;
+  --color-gold-dim: #c9a227;
+  --color-leather: #3d2914;
+
+  --shadow-journal: 0 4px 20px rgb(44 24 16 / 0.12),
+    inset 0 1px 0 rgb(255 255 255 / 0.5);
+  --shadow-journal-hover: 0 8px 28px rgb(44 24 16 / 0.18),
+    inset 0 1px 0 rgb(255 255 255 / 0.5);
+}
+
+@layer base {
+  body {
+    @apply min-h-screen bg-parchment font-[family-name:var(--font-body)] text-ink antialiased;
+    background-image: radial-gradient(
+        ellipse at 20% 0%,
+        rgb(255 248 230 / 0.8) 0%,
+        transparent 50%
+      ),
+      radial-gradient(
+        ellipse at 80% 100%,
+        rgb(232 213 168 / 0.5) 0%,
+        transparent 50%
+      );
+  }
+}
+
+@layer components {
+  .journal-panel {
+    @apply rounded-xl border border-ink/10 bg-parchment/90 shadow-[var(--shadow-journal)] backdrop-blur-sm;
+  }
+
+  .font-display {
+    font-family: var(--font-display);
+  }
+}
