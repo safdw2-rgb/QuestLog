@@ -16,8 +16,7 @@ class Settings(BaseSettings):
     app_title: str = "QuestLog API"
     app_version: str = "0.1.0"
 
-    openrouter_api_key: str | None = None
-    openrouter_model: str = "meta-llama/llama-3.2-3b-instruct:free"
+    gemini_api_key: str | None = None
     ai_quest_allow_fallback: bool = True
 
     obsidian_vault_path: str | None = None
@@ -38,7 +37,7 @@ class Settings(BaseSettings):
             return stripped or None
         return str(value)
 
-    @field_validator("openrouter_api_key", mode="before")
+    @field_validator("gemini_api_key", mode="before")
     @classmethod
     def normalize_api_key(cls, value: object) -> str | None:
         if value is None:

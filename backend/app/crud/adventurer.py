@@ -1,7 +1,8 @@
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.adventurer import Adventurer
-from app.schemas.adventurer import AdventurerRead
+from app.schemas.adventurer import AdventurerRead, AdventurerUpdate
 from app.services.leveling import total_xp_for_level
 
 
@@ -20,7 +21,43 @@ def to_adventurer_read(adventurer: Adventurer) -> AdventurerRead:
         experience_points=adventurer.experience_points,
         gold=adventurer.gold,
         level=adventurer.level,
+        lore=adventurer.lore,
         xp_to_next_level=xp_to_next_level,
         created_at=adventurer.created_at,
         updated_at=adventurer.updated_at,
     )
+
+
+async def update_adventurer(
+    db: AsyncSession,
+    adventurer: Adventurer,
+    data: AdventurerUpdate,
+) -> Adventurer:
+    fields_set = data.model_fields_set
+
+    if "username" in fields_set and data.username is not None:
+        username = data.username.strip()
+        if not username:
+            raise ValueError("username cannot be empty")
+        existing = await db.execute(
+            select(Adventurer).where(
+                Adventurer.username == username,
+                Adventurer.id != adventurer.id,
+            ),
+        )
+        if existing.scalar_one_or_none() is not None:
+            raise ValueError("username already taken")
+        adventurer.username = username
+
+    if "display_name" in fields_set and data.display_name is not None:
+        display_name = data.display_name.strip()
+        if not display_name:
+            raise ValueError("display_name cannot be empty")
+        adventurer.display_name = display_name
+
+    if "lore" in fields_set:
+        adventurer.lore = data.lore
+
+    await db.commit()
+    await db.refresh(adventurer)
+    return adventurer

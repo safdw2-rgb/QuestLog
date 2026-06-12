@@ -9,10 +9,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.adventurers import router as adventurers_router
+from app.api.factions import router as factions_router
 from app.api.quests import router as quests_router
 from app.api.rewards import router as rewards_router
 from app.config import settings
 from app.services.daily_quest_reset import reset_daily_quests
+from app.services.faction_season_report import faction_season_service
 from app.services.quest_reminders import check_quest_reminders
 
 logging.basicConfig(
@@ -41,9 +43,18 @@ async def lifespan(_app: FastAPI):
         replace_existing=True,
         misfire_grace_time=120,
     )
+    scheduler.add_job(
+        faction_season_service.run_monthly_season,
+        CronTrigger(day=1, hour=9, minute=0, timezone=tz),
+        id="faction_monthly_season",
+        replace_existing=True,
+        misfire_grace_time=7200,
+    )
     scheduler.start()
     logger.info(
-        "Schedulers started: daily reset 00:00 %s, Telegram reminders every 1 min",
+        "Schedulers started: daily reset 00:00 %s, reminders every 1 min, "
+        "faction season 1st 09:00 %s",
+        settings.daily_reset_timezone,
         settings.daily_reset_timezone,
     )
     yield
@@ -71,6 +82,7 @@ app.add_middleware(
 app.include_router(quests_router, prefix="/api/v1")
 app.include_router(adventurers_router, prefix="/api/v1")
 app.include_router(rewards_router, prefix="/api/v1")
+app.include_router(factions_router, prefix="/api/v1")
 
 
 @app.get("/health")

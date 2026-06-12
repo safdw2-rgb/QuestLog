@@ -2,6 +2,10 @@ from datetime import UTC, datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.crud.faction import (
+    REPUTATION_GAIN_ON_COMPLETE,
+    adjust_faction_reputation,
+)
 from app.models.adventurer import Adventurer
 from app.models.enums import JournalEntryType, QuestStatus
 from app.models.journal import JournalEntry
@@ -48,6 +52,14 @@ class QuestCompletionService:
             ),
         )
         db.add(journal)
+
+        if quest.faction_id is not None:
+            await adjust_faction_reputation(
+                db,
+                quest.faction_id,
+                REPUTATION_GAIN_ON_COMPLETE,
+            )
+
         return quest
 
     @staticmethod

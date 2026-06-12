@@ -37,7 +37,22 @@ async def send_telegram_message(text: str) -> bool:
     return False
 
 
-def format_quest_alert(quest_title: str) -> str:
+def format_quest_alarm(quest_title: str) -> str:
     return (
-        f"⚔️ Паша, время приключений! Квест требует внимания: {quest_title}"
+        f"⚔️ Паша, время приключений! Пора приступать к квесту: {quest_title}"
+    )
+
+
+def format_deadline_warning(quest_title: str) -> str:
+    return (
+        f"⏳ ВНИМАНИЕ! До дедлайна квеста {quest_title} осталось всего 15 минут! "
+        "Поспеши, иначе контракт будет провален, а золото — потеряно!"
+    )
+
+
+def format_quest_failed(quest_title: str) -> str:
+    return (
+        f"☠️ КВЕСТ ПРОВАЛЕН: {quest_title}. Время вышло. "
+        "Вы теряете очки опыта и золото, а контракт отправляется "
+        "на кладбище невыполненных задач!"
     )

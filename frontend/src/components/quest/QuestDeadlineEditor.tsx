@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { QuestDeadlineCountdown } from "@/components/quest/QuestDeadlineCountdown";
+import type { QuestScheduleUpdatePayload } from "@/lib/api";
 import {
   dailyTimeToIso,
   isoToDailyTime,
@@ -14,39 +15,43 @@ import type { QuestType } from "@/lib/types";
 
 interface QuestDeadlineEditorProps {
   questId: number;
-  deadline: string;
+  datetime: string;
   status: string;
   questType: QuestType;
+  field: "deadline" | "reminder";
   adventurerGold: number;
   compact?: boolean;
-  onSave: (questId: number, deadline: string | null) => Promise<void>;
+  onSave: (questId: number, payload: QuestScheduleUpdatePayload) => Promise<void>;
 }
 
 export function QuestDeadlineEditor({
   questId,
-  deadline,
+  datetime,
   status,
   questType,
+  field,
   adventurerGold,
   compact = false,
   onSave,
 }: QuestDeadlineEditorProps) {
   const isDaily = questType === "daily";
-  const isPaidReschedule = questType === "main" || questType === "side";
+  const isPaidReschedule =
+    field === "deadline" && (questType === "main" || questType === "side");
   const canAffordReschedule = adventurerGold >= DEADLINE_RESCHEDULE_COST;
+  const usesTimeInput = isDaily;
   const rootRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(
-    isDaily ? isoToDailyTime(deadline) : isoToDatetimeLocal(deadline),
+    usesTimeInput ? isoToDailyTime(datetime) : isoToDatetimeLocal(datetime),
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setValue(
-      isDaily ? isoToDailyTime(deadline) : isoToDatetimeLocal(deadline),
+      usesTimeInput ? isoToDailyTime(datetime) : isoToDatetimeLocal(datetime),
     );
-  }, [deadline, isDaily]);
+  }, [datetime, usesTimeInput]);
 
   useEffect(() => {
     if (!open) {
@@ -61,21 +66,27 @@ export function QuestDeadlineEditor({
         setOpen(false);
         setError(null);
         setValue(
-          isDaily ? isoToDailyTime(deadline) : isoToDatetimeLocal(deadline),
+          usesTimeInput
+            ? isoToDailyTime(datetime)
+            : isoToDatetimeLocal(datetime),
         );
       }
     }
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [open, deadline, isDaily]);
+  }, [open, datetime, usesTimeInput]);
+
+  function resetValue() {
+    setValue(
+      usesTimeInput ? isoToDailyTime(datetime) : isoToDatetimeLocal(datetime),
+    );
+  }
 
   function handleOpen(event: React.MouseEvent) {
     event.stopPropagation();
     setError(null);
-    setValue(
-      isDaily ? isoToDailyTime(deadline) : isoToDatetimeLocal(deadline),
-    );
+    resetValue();
     setOpen(true);
   }
 
@@ -83,24 +94,33 @@ export function QuestDeadlineEditor({
     event.stopPropagation();
     setOpen(false);
     setError(null);
-    setValue(
-      isDaily ? isoToDailyTime(deadline) : isoToDatetimeLocal(deadline),
-    );
+    resetValue();
   }
 
   async function handleSave(event: React.MouseEvent) {
     event.stopPropagation();
     setError(null);
 
-    const iso = isDaily ? dailyTimeToIso(value) : localDatetimeToIso(value);
+    const iso = usesTimeInput
+      ? dailyTimeToIso(value)
+      : localDatetimeToIso(value);
     if (!iso) {
-      setError(isDaily ? "Укажите время оповещения" : "Укажите дату и время");
+      setError(
+        usesTimeInput
+          ? "Укажите время оповещения"
+          : field === "reminder"
+            ? "Укажите дату и время будильника"
+            : "Укажите дату и время дедлайна",
+      );
       return;
     }
 
+    const payload: QuestScheduleUpdatePayload =
+      field === "deadline" ? { deadline: iso } : { reminder_time: iso };
+
     setSaving(true);
     try {
-      await onSave(questId, iso);
+      await onSave(questId, payload);
       setOpen(false);
     } catch (e) {
       setError(
@@ -111,25 +131,38 @@ export function QuestDeadlineEditor({
     }
   }
 
+  const popoverTitle = isDaily
+    ? "Время оповещения"
+    : field === "reminder"
+      ? "Будильник"
+      : "Дедлайн";
+
   const saveDisabled =
     saving || (isPaidReschedule && !canAffordReschedule);
 
   return (
     <div
       ref={rootRef}
-      className={`quest-deadline-editor ${compact ? "shrink-0" : ""}`}
+      className={`quest-deadline-editor ${compact ? "shrink-0" : ""} ${open ? "z-[100]" : ""}`}
       onClick={(e) => e.stopPropagation()}
     >
       <button
         type="button"
         className="quest-deadline-trigger"
         onClick={handleOpen}
-        title={isDaily ? "Изменить время оповещения" : "Изменить дедлайн"}
+        title={
+          isDaily
+            ? "Изменить время оповещения"
+            : field === "reminder"
+              ? "Изменить будильник"
+              : "Изменить дедлайн"
+        }
         aria-expanded={open}
       >
         <QuestDeadlineCountdown
-          deadline={deadline}
+          datetime={datetime}
           status={status}
+          field={field}
           questType={questType}
           compact={compact}
           editable
@@ -140,11 +173,9 @@ export function QuestDeadlineEditor({
         <div
           className={`deadline-edit-popover ${compact ? "deadline-edit-popover-compact" : ""}`}
           role="dialog"
-          aria-label={isDaily ? "Время оповещения" : "Дедлайн квеста"}
+          aria-label={popoverTitle}
         >
-          <p className="deadline-edit-popover-title">
-            {isDaily ? "Время оповещения" : "Дедлайн"}
-          </p>
+          <p className="deadline-edit-popover-title">{popoverTitle}</p>
 
           {isPaidReschedule && (
             <p
@@ -161,7 +192,7 @@ export function QuestDeadlineEditor({
             </p>
           )}
 
-          {isDaily ? (
+          {usesTimeInput ? (
             <input
               className="journal-input"
               type="time"

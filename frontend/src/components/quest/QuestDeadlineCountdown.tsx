@@ -11,43 +11,51 @@ import {
 import type { QuestType } from "@/lib/types";
 
 interface QuestDeadlineCountdownProps {
-  deadline: string;
+  datetime: string;
   status: string;
+  field?: "deadline" | "reminder";
   questType?: QuestType;
   compact?: boolean;
   editable?: boolean;
 }
 
 export function QuestDeadlineCountdown({
-  deadline,
+  datetime,
   status,
+  field = "deadline",
   questType,
   compact = false,
   editable = false,
 }: QuestDeadlineCountdownProps) {
-  const isDailyReminder = questType === "daily";
+  const isReminder =
+    field === "reminder" || (field === "deadline" && questType === "daily");
   const now = useNow(compact ? 60_000 : 1000);
-  const remainingMs = getDeadlineRemainingMs(deadline, now.getTime());
-  const overdue = isDeadlineOverdue(deadline, status, now.getTime());
+  const remainingMs = getDeadlineRemainingMs(datetime, now.getTime());
+  const overdue = isDeadlineOverdue(datetime, status, now.getTime());
   const countdownText = formatCountdown(remainingMs, { compact });
   const label = overdue
-    ? isDailyReminder
+    ? isReminder
       ? "Оповещение прошло"
       : "Просрочен"
-    : isDailyReminder
-      ? `До оповещения: ${countdownText}`
+    : isReminder
+      ? `До будильника: ${countdownText}`
       : `Осталось: ${countdownText}`;
-  const metaLabel = isDailyReminder
-    ? `Оповещение в ${formatReminderTime(deadline)}`
-    : formatDeadlineDateTime(deadline);
+  const metaLabel = isReminder
+    ? `Будильник в ${formatReminderTime(datetime)}`
+    : formatDeadlineDateTime(datetime);
 
   if (compact) {
+    const icon = isReminder ? "⚔️" : "⏳";
     return (
       <span
         className={`quest-deadline-compact ${editable ? "quest-deadline-editable" : ""} ${overdue ? "quest-deadline-overdue" : ""}`}
         title={metaLabel}
       >
-        {overdue ? "⏰ Просрочен" : `⏳ ${countdownText}`}
+        {overdue
+          ? isReminder
+            ? `${icon} Прошло`
+            : "⏰ Просрочен"
+          : `${icon} ${countdownText}`}
       </span>
     );
   }
@@ -58,11 +66,11 @@ export function QuestDeadlineCountdown({
     >
       <p className="quest-deadline-countdown-label">
         {overdue
-          ? isDailyReminder
+          ? isReminder
             ? "Оповещение прошло"
             : "Срок истёк"
-          : isDailyReminder
-            ? "До оповещения"
+          : isReminder
+            ? "До будильника"
             : "До дедлайна"}
       </p>
       <p className="quest-deadline-countdown-value">{label}</p>

@@ -2,7 +2,9 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
+    Boolean,
     DateTime,
+    Float,
     ForeignKey,
     Integer,
     String,
@@ -73,6 +75,15 @@ class Quest(Base):
     gold_earned: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
 
     deadline: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    reminder_time: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
+    latitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    longitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    bargained: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false"
+    )
 
     started_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()

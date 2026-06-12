@@ -20,6 +20,16 @@ export type QuestDifficulty =
   | "hard"
   | "legendary";
 
+export interface Faction {
+  id: number;
+  name: string;
+  slug: string;
+  icon: string | null;
+  color: string | null;
+  description: string | null;
+  reputation_points: number;
+}
+
 export interface Adventurer {
   id: number;
   username: string;
@@ -27,9 +37,16 @@ export interface Adventurer {
   experience_points: number;
   gold: number;
   level: number;
+  lore: string | null;
   xp_to_next_level: number;
   created_at: string;
   updated_at: string;
+}
+
+export interface QuestUpdateResult {
+  quest: Quest;
+  adventurer: Adventurer;
+  gold_spent: number;
 }
 
 export interface Reward {
@@ -52,7 +69,17 @@ export interface QuestDeadlineUpdateResult {
   gold_spent: number;
 }
 
+export interface QuestBargainResult {
+  quest: Quest;
+  adventurer: Adventurer;
+  roll: number;
+  outcome: "fail" | "success" | "critical";
+  message: string;
+  gold_spent: number;
+}
+
 export const DEADLINE_RESCHEDULE_COST = 20;
+export const BARGAIN_COST = 10;
 
 export interface Quest {
   id: number;
@@ -70,6 +97,10 @@ export interface Quest {
   xp_earned: number;
   gold_earned: number;
   deadline: string | null;
+  reminder_time: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  bargained: boolean;
   started_at: string;
   completed_at: string | null;
   failed_at: string | null;

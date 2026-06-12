@@ -19,6 +19,11 @@
 }
 
 @layer base {
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
   body {
     @apply min-h-screen bg-parchment font-[family-name:var(--font-body)] text-ink antialiased;
     background-image: radial-gradient(
@@ -107,6 +112,10 @@
     @apply bg-gold/15 text-ink;
   }
 
+  .quest-card {
+    overflow: visible;
+  }
+
   .quest-card-summary {
     @apply cursor-pointer transition-colors hover:bg-parchment-dark/30;
   }
@@ -123,59 +132,41 @@
 
   .quest-card-body-inner {
     overflow: hidden;
+    min-height: 0;
+  }
+
+  .quest-card:has(.deadline-edit-popover) {
+    position: relative;
+    z-index: 100;
   }
 
   .difficulty-badge {
-    @apply inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide;
+    @apply inline-flex max-w-full items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold tracking-wide;
   }
 
-  .difficulty-badge-gem {
-    @apply inline-block h-2.5 w-2.5 rotate-45 rounded-[2px] border border-current;
+  .difficulty-badge-swords {
+    @apply shrink-0 leading-none;
+    letter-spacing: -0.12em;
   }
 
-  .difficulty-badge-low {
-    @apply border-emerald-400/50 bg-emerald-50/80 text-emerald-800;
+  .difficulty-badge-label {
+    @apply uppercase;
   }
 
-  .difficulty-badge-low .difficulty-badge-gem {
-    @apply bg-emerald-400/70;
+  .difficulty-badge-errand {
+    @apply border-stone-400/40 bg-stone-100/70 text-stone-800;
   }
 
-  .difficulty-badge-normal {
-    @apply border-sky-400/50 bg-sky-50/80 text-sky-900;
+  .difficulty-badge-adventure {
+    @apply border-sky-400/45 bg-sky-50/80 text-sky-900;
   }
 
-  .difficulty-badge-normal .difficulty-badge-gem {
-    @apply bg-sky-400/80;
+  .difficulty-badge-trial {
+    @apply border-amber-400/50 bg-amber-50/85 text-amber-950;
   }
 
-  .difficulty-badge-high {
-    @apply border-orange-400/55 bg-orange-50/85 text-orange-900;
-  }
-
-  .difficulty-badge-high .difficulty-badge-gem {
-    @apply bg-orange-400/85;
-  }
-
-  .difficulty-badge-deadly {
-    @apply border-rose-600/55 bg-rose-50/90 text-rose-950;
-    animation: difficulty-deadly-pulse 2s ease-in-out infinite;
-  }
-
-  .difficulty-badge-deadly .difficulty-badge-gem {
-    @apply bg-rose-600/90;
-  }
-
-  @keyframes difficulty-deadly-pulse {
-    0%,
-    100% {
-      box-shadow: 0 0 0 0 rgb(225 29 72 / 0);
-      border-color: rgb(225 29 72 / 0.45);
-    }
-    50% {
-      box-shadow: 0 0 10px 1px rgb(225 29 72 / 0.35);
-      border-color: rgb(190 18 60 / 0.75);
-    }
+  .difficulty-badge-legendary {
+    @apply border-orange-500/55 bg-orange-50/90 text-orange-950;
   }
 
   .quest-subquests-heading {
@@ -286,7 +277,7 @@
   }
 
   .deadline-edit-popover {
-    @apply absolute left-0 top-full z-30 mt-2 w-64 rounded-xl border border-ink/15 bg-parchment p-3 shadow-[var(--shadow-journal-hover)];
+    @apply absolute left-0 top-full z-[100] mt-2 w-64 rounded-xl border border-ink/15 bg-parchment p-3 shadow-[var(--shadow-journal-hover)];
   }
 
   .deadline-edit-popover-compact {
@@ -360,8 +351,12 @@
   }
 
   .dashboard-view-button {
-    @apply rounded-lg px-3 py-2 text-sm font-medium text-ink-muted transition;
+    @apply flex min-w-0 flex-col items-center justify-center gap-1 rounded-lg px-2 py-2.5 text-sm font-medium text-ink-muted transition sm:flex-row sm:gap-2 sm:px-3 sm:py-2;
     @apply hover:bg-parchment-dark/40 hover:text-ink;
+  }
+
+  .dashboard-view-icon {
+    @apply flex h-5 w-5 shrink-0 items-center justify-center text-base leading-none;
   }
 
   .dashboard-view-button-active {
@@ -375,4 +370,382 @@
   .reward-shop-icon {
     box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.45);
   }
+
+  .quest-create-panel {
+    max-height: 92dvh;
+  }
+
+  @media (min-width: 640px) {
+    .quest-create-panel {
+      max-height: 90vh;
+    }
+  }
+
+  .quest-create-body {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  .journal-button-bargain {
+    @apply inline-flex items-center gap-2 rounded-lg border border-gold/40 bg-gold/10 px-4 py-2 text-sm font-medium text-ink transition;
+    @apply hover:bg-gold/20 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .world-map-container {
+    height: min(70vh, 560px);
+  }
+
+  .world-map-leaflet {
+    z-index: 0;
+    height: 100%;
+    width: 100%;
+  }
+
+  .world-map-marker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    border: 2px solid rgb(184 134 11 / 0.8);
+    background: rgb(244 232 200 / 0.95);
+    box-shadow: 0 2px 8px rgb(44 24 16 / 0.25);
+    font-size: 14px;
+    line-height: 1;
+  }
+
+  .world-map-popup {
+    min-width: 10rem;
+  }
+
+  .world-map-popup-title {
+    margin-bottom: 0.5rem;
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    color: var(--color-ink);
+  }
+
+  .world-map-popup-button {
+    border-radius: 0.5rem;
+    border: 1px solid rgb(184 134 11 / 0.45);
+    background: rgb(184 134 11 / 0.12);
+    padding: 0.35rem 0.65rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-ink);
+    cursor: pointer;
+  }
+
+  .world-map-popup-button:hover {
+    background: rgb(184 134 11 / 0.22);
+  }
+
+  .quest-create-overlay,
+  .quest-create-panel,
+  .quest-create-body {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .location-picker-mini-map .leaflet-container,
+  .world-map-leaflet {
+    max-width: 100%;
+  }
+
+  .journal-today-button {
+    @apply rounded-lg border border-ink/15 bg-parchment-dark/40 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-ink-muted transition;
+    @apply hover:border-gold/40 hover:bg-gold/10 hover:text-ink;
+  }
+
+  .journal-today-button-active {
+    @apply border-gold/50 bg-gold/15 text-ink;
+  }
+
+  .edit-mode-toggle {
+    @apply flex h-10 w-10 items-center justify-center rounded-lg border border-ink/15 bg-parchment-dark/40 text-lg transition;
+    @apply hover:border-gold/40 hover:bg-gold/10;
+  }
+
+  .edit-mode-toggle-active {
+    @apply border-gold/50 bg-gold/20 shadow-sm ring-2 ring-gold/30;
+  }
+
+  .quest-faction-emoji {
+    display: inline-block;
+    vertical-align: -0.1em;
+    font-size: 1.05em;
+    line-height: 1;
+  }
+
+  .location-picker-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-top: 1px solid rgb(44 24 16 / 0.08);
+    background: rgb(244 232 200 / 0.65);
+    padding: 0.35rem 0.75rem;
+  }
+
+  .location-picker-actions .location-picker-hint {
+    border-top: none;
+    background: transparent;
+    padding: 0;
+    margin: 0;
+  }
+
+  .location-picker-clear {
+    flex-shrink: 0;
+    border-radius: 0.375rem;
+    border: 1px solid rgb(44 24 16 / 0.12);
+    background: rgb(255 255 255 / 0.5);
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--color-ink-muted);
+    cursor: pointer;
+  }
+
+  .location-picker-clear:hover {
+    border-color: rgb(190 24 24 / 0.35);
+    color: rgb(127 29 29);
+  }
+
+  .quest-calendar-nav {
+    @apply flex h-7 w-7 items-center justify-center rounded-md border border-ink/10 text-ink-muted transition hover:border-gold/40 hover:bg-gold/10 hover:text-ink;
+  }
+
+  .quest-calendar-day-empty {
+    height: 2rem;
+  }
+
+  .quest-calendar-day {
+    @apply relative flex h-8 flex-col items-center justify-center rounded-md text-xs text-ink transition;
+    @apply hover:bg-gold/10;
+  }
+
+  .quest-calendar-day-today {
+    @apply font-semibold text-gold;
+  }
+
+  .quest-calendar-day-selected {
+    @apply bg-gold/20 font-semibold text-ink ring-1 ring-gold/50;
+  }
+
+  .quest-calendar-dot {
+    position: absolute;
+    bottom: 2px;
+    left: 50%;
+    height: 4px;
+    width: 4px;
+    transform: translateX(-50%);
+    border-radius: 9999px;
+    background: var(--color-gold);
+  }
+
+  .location-picker-mini {
+    overflow: hidden;
+    border-radius: 0.75rem;
+    border: 1px solid rgb(44 24 16 / 0.12);
+  }
+
+  .location-picker-map-wrap {
+    isolation: isolate;
+  }
+
+  .location-picker-mini-map {
+    z-index: 0;
+    height: 10rem;
+    width: 100%;
+    max-width: 100%;
+    cursor: crosshair;
+  }
+
+  .location-picker-find-me {
+    position: absolute;
+    right: 0.5rem;
+    top: 0.5rem;
+    z-index: 500;
+    display: flex;
+    height: 2rem;
+    width: 2rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem;
+    border: 1px solid rgb(44 24 16 / 0.15);
+    background: rgb(244 232 200 / 0.95);
+    font-size: 1rem;
+    line-height: 1;
+    box-shadow: 0 1px 3px rgb(44 24 16 / 0.12);
+    cursor: pointer;
+  }
+
+  .location-picker-find-me:disabled {
+    opacity: 0.6;
+    cursor: wait;
+  }
+
+  .location-picker-error {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.7rem;
+    color: rgb(127 29 29);
+  }
+
+  .location-picker-marker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    line-height: 1;
+  }
+
+  .location-picker-hint {
+    border-top: 1px solid rgb(44 24 16 / 0.08);
+    background: rgb(244 232 200 / 0.65);
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+    color: var(--color-ink-muted);
+  }
+
+  .faction-add-button,
+  .faction-edit-button {
+    @apply flex h-8 w-8 items-center justify-center rounded-lg border border-ink/15 bg-parchment-dark/50 text-sm transition;
+    @apply hover:border-gold/40 hover:bg-gold/10;
+  }
+
+  .faction-add-button {
+    @apply font-display text-lg leading-none text-ink;
+  }
+
+  .hero-name-button {
+    @apply rounded-lg transition;
+  }
+
+  .hero-name-button:hover .font-display {
+    color: var(--color-gold);
+  }
+
+  .hero-character-panel {
+    box-shadow: 0 12px 40px rgb(44 24 16 / 0.18);
+  }
+
+  .theme-switcher-button {
+    @apply inline-flex h-10 items-center gap-1.5 rounded-lg border border-ink/15 bg-parchment-dark/40 px-3 text-sm font-medium text-ink transition;
+    @apply hover:border-gold/40 hover:bg-gold/10;
+  }
+
+  .theme-switcher-menu {
+    @apply absolute right-0 top-[calc(100%+0.5rem)] z-50 min-w-[12rem] overflow-hidden rounded-xl border border-ink/15 bg-parchment shadow-[var(--shadow-journal-hover)];
+  }
+
+  .theme-switcher-option {
+    @apply flex w-full flex-col items-start gap-0.5 px-3 py-2.5 text-left text-sm text-ink transition;
+    @apply hover:bg-parchment-dark/50;
+  }
+
+  .theme-switcher-option-active {
+    @apply bg-gold/15;
+  }
+
+  .quest-card-summary {
+    overflow: hidden;
+  }
+
+  .journal-button-retire-daily {
+    @apply inline-flex items-center gap-2 rounded-lg border border-ink/20 bg-parchment-dark/50 px-4 py-2 text-sm font-medium text-ink-muted transition;
+    @apply hover:border-rose-300/50 hover:bg-rose-50/70 hover:text-rose-900 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+}
+
+/* ── Тема: Подземелье ── */
+[data-theme="dungeon"] {
+  --color-parchment: #232328;
+  --color-parchment-dark: #18181c;
+  --color-ink: #ece5d8;
+  --color-ink-muted: #a89f92;
+  --color-gold: #c9a227;
+  --color-gold-dim: #9a7b1a;
+  --color-leather: #2e2418;
+  --shadow-journal: 0 4px 24px rgb(0 0 0 / 0.45),
+    inset 0 1px 0 rgb(255 255 255 / 0.04);
+  --shadow-journal-hover: 0 8px 32px rgb(0 0 0 / 0.55),
+    inset 0 1px 0 rgb(255 255 255 / 0.06);
+}
+
+[data-theme="dungeon"] body {
+  background-color: #121216;
+  background-image: radial-gradient(
+      ellipse at 20% 0%,
+      rgb(50 45 35 / 0.35) 0%,
+      transparent 55%
+    ),
+    radial-gradient(
+      ellipse at 80% 100%,
+      rgb(30 28 24 / 0.5) 0%,
+      transparent 50%
+    );
+}
+
+[data-theme="dungeon"] .difficulty-badge-errand {
+  @apply border-stone-500/35 bg-stone-800/60 text-stone-200;
+}
+
+[data-theme="dungeon"] .difficulty-badge-adventure {
+  @apply border-sky-500/35 bg-sky-950/50 text-sky-200;
+}
+
+[data-theme="dungeon"] .difficulty-badge-trial {
+  @apply border-amber-500/40 bg-amber-950/45 text-amber-200;
+}
+
+[data-theme="dungeon"] .difficulty-badge-legendary {
+  @apply border-orange-500/45 bg-orange-950/45 text-orange-200;
+}
+
+/* ── Тема: Киберпанк ── */
+[data-theme="cyberpunk"] {
+  --color-parchment: #15101f;
+  --color-parchment-dark: #0d0914;
+  --color-ink: #e8f4ff;
+  --color-ink-muted: #9aa8c7;
+  --color-gold: #ff2d95;
+  --color-gold-dim: #00d4ff;
+  --color-leather: #1a1030;
+  --shadow-journal: 0 0 0 1px rgb(0 212 255 / 0.12),
+    0 8px 28px rgb(0 0 0 / 0.5);
+  --shadow-journal-hover: 0 0 0 1px rgb(255 45 149 / 0.25),
+    0 12px 36px rgb(255 45 149 / 0.12);
+}
+
+[data-theme="cyberpunk"] body {
+  background-color: #08060f;
+  background-image: radial-gradient(
+      ellipse at 15% 0%,
+      rgb(0 212 255 / 0.12) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse at 85% 100%,
+      rgb(255 45 149 / 0.1) 0%,
+      transparent 50%
+    );
+}
+
+[data-theme="cyberpunk"] .journal-button-primary {
+  @apply border-[#00d4ff]/50 from-[#00d4ff]/20 to-[#00d4ff]/5 text-[#e8f4ff];
+  @apply hover:from-[#00d4ff]/30 hover:to-[#00d4ff]/10;
+}
+
+[data-theme="cyberpunk"] .journal-tab-active::after {
+  @apply bg-[#ff2d95];
+}
+
+[data-theme="cyberpunk"] .dashboard-view-button-active {
+  @apply bg-[#ff2d95]/15 text-[#e8f4ff];
+}
+
+[data-theme="cyberpunk"] .difficulty-badge-adventure {
+  @apply border-[#00d4ff]/40 bg-[#00d4ff]/10 text-[#b8f0ff];
+}
+
+[data-theme="cyberpunk"] .difficulty-badge-legendary {
+  @apply border-[#ff2d95]/45 bg-[#ff2d95]/10 text-[#ffd0e8];
 }

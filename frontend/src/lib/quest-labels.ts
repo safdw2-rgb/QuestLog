@@ -1,4 +1,5 @@
 import type { QuestDifficulty, QuestStatus, QuestType } from "@/lib/types";
+import { formatDifficultyLabel } from "@/lib/difficulty";
 
 export const QUEST_TYPE_LABELS: Record<QuestType, string> = {
   main: "Главный сюжет",
@@ -18,9 +19,9 @@ export const QUEST_STATUS_LABELS: Record<QuestStatus, string> = {
 };
 
 export const QUEST_DIFFICULTY_LABELS: Record<QuestDifficulty, string> = {
-  trivial: "Пустяк",
-  easy: "Лёгкий",
-  normal: "Обычный",
-  hard: "Сложный",
-  legendary: "Легендарный",
+  trivial: formatDifficultyLabel("trivial"),
+  easy: formatDifficultyLabel("easy"),
+  normal: formatDifficultyLabel("normal"),
+  hard: formatDifficultyLabel("hard"),
+  legendary: formatDifficultyLabel("legendary"),
 };

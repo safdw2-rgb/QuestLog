@@ -2,6 +2,7 @@ import type { Quest } from "@/lib/types";
 import { isRootQuest } from "@/lib/quest-utils";
 
 export type QuestJournalTab =
+  | "all"
   | "main"
   | "side"
   | "daily"
@@ -13,12 +14,16 @@ export const QUEST_JOURNAL_TABS: {
   label: string;
   marker: string;
 }[] = [
+  { id: "all", label: "Все", marker: "✧" },
   { id: "main", label: "Основные", marker: "◆" },
   { id: "side", label: "Побочные", marker: "◇" },
   { id: "daily", label: "Ежедневные", marker: "◆" },
   { id: "completed", label: "Завершённые", marker: "✦" },
   { id: "failed", label: "Проваленные", marker: "☠" },
 ];
+
+export const EMPTY_ALL_TAB_MESSAGE =
+  "Активных квестов пока нет. Создайте новое задание в любом разделе!";
 
 export const EMPTY_TAB_MESSAGE =
   'В этой секции дневника пока пусто. Нажмите "+ Добавить квест", чтобы начать новое приключение!';
@@ -31,6 +36,8 @@ export function filterQuestsByTab(
   tab: QuestJournalTab,
 ): Quest[] {
   switch (tab) {
+    case "all":
+      return quests.filter((q) => isRootQuest(q) && q.status === "active");
     case "main":
       return quests.filter(
         (q) =>
@@ -63,6 +70,25 @@ export function filterQuestsByTab(
     default:
       return quests;
   }
+}
+
+export function getTabForQuest(quest: Quest): QuestJournalTab {
+  if (quest.status === "active") {
+    return "all";
+  }
+  if (quest.status === "completed" && quest.quest_type !== "daily") {
+    return "completed";
+  }
+  if (quest.status === "failed" && quest.quest_type !== "daily") {
+    return "failed";
+  }
+  if (quest.quest_type === "daily") {
+    return "daily";
+  }
+  if (quest.quest_type === "main") {
+    return "main";
+  }
+  return "side";
 }
 
 export function countQuestsByTab(

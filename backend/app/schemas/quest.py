@@ -28,6 +28,16 @@ def validate_deadline(value: object) -> datetime | None:
 
 OptionalForeignKey = Annotated[int | None, BeforeValidator(validate_foreign_keys)]
 OptionalDeadline = Annotated[datetime | None, BeforeValidator(validate_deadline)]
+OptionalReminderTime = Annotated[datetime | None, BeforeValidator(validate_deadline)]
+
+
+def validate_optional_float(value: object) -> float | None:
+    if value is None or value == "":
+        return None
+    return float(value)  # type: ignore[arg-type]
+
+
+OptionalCoordinate = Annotated[float | None, BeforeValidator(validate_optional_float)]
 
 
 class QuestCreate(BaseModel):
@@ -39,6 +49,9 @@ class QuestCreate(BaseModel):
     xp_reward: int = Field(default=0, ge=0)
     gold_reward: int = Field(default=0, ge=0)
     deadline: OptionalDeadline = None
+    reminder_time: OptionalReminderTime = None
+    latitude: OptionalCoordinate = None
+    longitude: OptionalCoordinate = None
     faction_id: OptionalForeignKey = None
     location_id: OptionalForeignKey = None
     parent_quest_id: OptionalForeignKey = None
@@ -51,10 +64,23 @@ class QuestStatusUpdate(BaseModel):
 
 class QuestDeadlineUpdate(BaseModel):
     deadline: OptionalDeadline = None
+    reminder_time: OptionalReminderTime = None
+
+
+class QuestUpdate(BaseModel):
+    title: str | None = Field(default=None, max_length=200)
+    description: str | None = None
+    faction_id: OptionalForeignKey = None
+    deadline: OptionalDeadline = None
+    reminder_time: OptionalReminderTime = None
+    latitude: OptionalCoordinate = None
+    longitude: OptionalCoordinate = None
 
 
 class QuestAiGenerateRequest(BaseModel):
     title: str = Field(min_length=1, max_length=200)
+    latitude: OptionalCoordinate = None
+    longitude: OptionalCoordinate = None
 
 
 class QuestAiGenerateResponse(BaseModel):
@@ -63,7 +89,7 @@ class QuestAiGenerateResponse(BaseModel):
     difficulty: QuestDifficulty
     xp_reward: int = Field(ge=0)
     gold_reward: int = Field(ge=0)
-    source: str = Field(description="openrouter или fallback")
+    source: str = Field(description="gemini или fallback")
 
 
 class QuestRead(BaseModel):
@@ -84,6 +110,10 @@ class QuestRead(BaseModel):
     xp_earned: int
     gold_earned: int
     deadline: datetime | None
+    reminder_time: datetime | None
+    latitude: float | None
+    longitude: float | None
+    bargained: bool
     started_at: datetime
     completed_at: datetime | None
     failed_at: datetime | None
@@ -97,3 +127,18 @@ class QuestDeadlineUpdateResponse(BaseModel):
     quest: QuestRead
     adventurer: AdventurerRead
     gold_spent: int = Field(default=0, ge=0)
+
+
+class QuestUpdateResponse(BaseModel):
+    quest: QuestRead
+    adventurer: AdventurerRead
+    gold_spent: int = Field(default=0, ge=0)
+
+
+class QuestBargainResponse(BaseModel):
+    quest: QuestRead
+    adventurer: AdventurerRead
+    roll: int = Field(ge=1, le=20)
+    outcome: str = Field(description="fail, success или critical")
+    message: str
+    gold_spent: int = Field(default=10, ge=0)

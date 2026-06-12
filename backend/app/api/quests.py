@@ -7,16 +7,16 @@ from app.models.enums import QuestStatus
 from app.schemas.quest import (
     QuestAiGenerateRequest,
     QuestAiGenerateResponse,
+    QuestBargainResponse,
     QuestCreate,
     QuestDeadlineUpdate,
     QuestDeadlineUpdateResponse,
     QuestRead,
     QuestStatusUpdate,
+    QuestUpdate,
+    QuestUpdateResponse,
 )
-from app.services.ai_quest_generator import (
-    OpenRouterGenerationError,
-    ai_quest_generator,
-)
+from app.services.ai_generator import GeminiGenerationError, ai_quest_generator
 
 router = APIRouter(prefix="/quests", tags=["quests"])
 
@@ -26,17 +26,20 @@ async def generate_ai_quest_details(
     data: QuestAiGenerateRequest,
 ) -> QuestAiGenerateResponse:
     try:
-        result = await ai_quest_generator.generate(data.title)
+        result = await ai_quest_generator.generate(
+            data.title,
+            latitude=data.latitude,
+            longitude=data.longitude,
+        )
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(exc),
         ) from exc
-    except OpenRouterGenerationError as exc:
-        # Режим отладки: честная 500 + traceback в терминале uvicorn
+    except GeminiGenerationError as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"OpenRouter error: {exc}",
+            detail=f"Gemini error: {exc}",
         ) from exc
 
     return QuestAiGenerateResponse(
@@ -77,13 +80,83 @@ async def update_quest_deadline(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Quest not found")
 
     try:
-        return await quest_crud.update_quest_deadline(db, quest, data.deadline)
+        fields_set = data.model_fields_set
+        return await quest_crud.update_quest_deadline(
+            db,
+            quest,
+            data.deadline if "deadline" in fields_set else ...,
+            data.reminder_time if "reminder_time" in fields_set else ...,
+        )
     except ValueError as exc:
         message = str(exc)
         status_code = (
             status.HTTP_400_BAD_REQUEST
             if "not enough gold" in message.lower()
             else status.HTTP_404_NOT_FOUND
+        )
+        raise HTTPException(status_code=status_code, detail=message) from exc
+
+
+@router.post("/{quest_id}/bargain", response_model=QuestBargainResponse)
+async def bargain_quest_reward(
+    quest_id: int,
+    db: AsyncSession = Depends(get_db),
+) -> QuestBargainResponse:
+    quest = await quest_crud.get_quest(db, quest_id)
+    if quest is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Quest not found")
+
+    try:
+        return await quest_crud.bargain_quest_gold(db, quest)
+    except ValueError as exc:
+        message = str(exc)
+        if "not enough gold" in message.lower():
+            status_code = status.HTTP_400_BAD_REQUEST
+        elif "already used" in message.lower():
+            status_code = status.HTTP_409_CONFLICT
+        elif "only available" in message.lower():
+            status_code = status.HTTP_400_BAD_REQUEST
+        else:
+            status_code = status.HTTP_400_BAD_REQUEST
+        raise HTTPException(status_code=status_code, detail=message) from exc
+
+
+@router.post("/{quest_id}/retire-daily", response_model=QuestRead)
+async def retire_daily_quest(
+    quest_id: int,
+    db: AsyncSession = Depends(get_db),
+) -> QuestRead:
+    quest = await quest_crud.get_quest(db, quest_id)
+    if quest is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Quest not found")
+
+    try:
+        return await quest_crud.retire_daily_quest(db, quest)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+
+
+@router.patch("/{quest_id}", response_model=QuestUpdateResponse)
+async def update_quest(
+    quest_id: int,
+    data: QuestUpdate,
+    db: AsyncSession = Depends(get_db),
+) -> QuestUpdateResponse:
+    quest = await quest_crud.get_quest(db, quest_id)
+    if quest is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Quest not found")
+
+    try:
+        return await quest_crud.update_quest(db, quest, data)
+    except ValueError as exc:
+        message = str(exc)
+        status_code = (
+            status.HTTP_400_BAD_REQUEST
+            if "not enough gold" in message.lower()
+            else status.HTTP_400_BAD_REQUEST
         )
         raise HTTPException(status_code=status_code, detail=message) from exc
 

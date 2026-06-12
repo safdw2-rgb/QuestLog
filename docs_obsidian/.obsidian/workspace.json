@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Quests/quest-10.md",
+                "file": "Achievement.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "quest-10"
+              "title": "Achievement"
             }
           }
         ]
@@ -94,7 +94,6 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Quests/quest-10.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -104,7 +103,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Зворотні посилання для quest-10"
+              "title": "Зворотні посилання"
             }
           },
           {
@@ -113,12 +112,11 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "Quests/quest-10.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Вихідні посилання з quest-10"
+              "title": "Вихідні посилання"
             }
           },
           {
@@ -156,13 +154,12 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Quests/quest-10.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Вміст quest-10"
+              "title": "Вміст"
             }
           }
         ]
@@ -183,34 +180,34 @@
       "bases:Створити нову базу": false
     }
   },
-  "active": "58aba4bd8a922c81",
+  "active": "daf74e5db434a735",
   "lastOpenFiles": [
-    "Quests/quest-31.md",
-    "Quests/quest-30.md",
-    "Quests/quest-29.md",
-    "Quests/quest-28.md",
-    "Quests/quest-27.md",
-    "Quests/quest-26.md",
-    "Quests/quest-25.md",
-    "Quests/quest-24.md",
-    "Quests/quest-23.md",
-    "Quests/quest-22.md",
-    "Quests/quest-21.md",
-    "Quests/quest-20.md",
-    "Quests/quest-19.md",
-    "Quests/quest-18.md",
-    "Quests/quest-17.md",
     "Quests/quest-1.md",
-    "Quests/quest-2.md",
-    "Quests/quest-5.md",
-    "Quests/quest-16.md",
-    "Quests/quest-15.md",
-    "Quests/quest-8.md",
-    "Quests/quest-14.md",
+    "Hero_Lore/Ldvir_History.md",
     "QuestStep.md",
-    "Quests/quest-13.md",
+    "QuestLog.md",
+    "Quest.md",
+    "Quests/quest-15.md",
+    "Quests/quest-19.md",
+    "Quests/quest-14.md",
     "Quests/quest-12.md",
     "Quests/quest-11.md",
+    "Quests/quest-9.md",
+    "Quests/quest-6.md",
+    "Quests/quest-2.md",
+    "Quests/quest-5.md",
+    "Quests/quest-10.md",
+    "Quests/quest-18.md",
+    "Quests/quest-31.md",
+    "Quests/quest-30.md",
+    "Quests/quest-32.md",
+    "Quests/quest-34.md",
+    "Quests/quest-33.md",
+    "Quests/quest-27.md",
+    "Quests/quest-24.md",
+    "Achievement.md",
+    "Quests/quest-29.md",
+    "Quests/quest-28.md",
     "Quests"
   ]
 }

@@ -12,9 +12,9 @@ from app.models.quest import Quest
 logger = logging.getLogger(__name__)
 
 
-def _shift_deadline_to_today(deadline: datetime, tz: ZoneInfo) -> datetime:
+def _shift_reminder_to_today(reminder_time: datetime, tz: ZoneInfo) -> datetime:
     """Сохраняет время оповещения, переносит дату на текущий день (после полуночи)."""
-    local = deadline.astimezone(tz)
+    local = reminder_time.astimezone(tz)
     today = datetime.now(tz).date()
     return datetime(
         today.year,
@@ -30,7 +30,7 @@ def _shift_deadline_to_today(deadline: datetime, tz: ZoneInfo) -> datetime:
 async def reset_daily_quests() -> int:
     """
     Сбрасывает выполненные и проваленные ежедневные квесты в active.
-    Время оповещения (deadline) сохраняется, дата сдвигается на новый день.
+    Время оповещения (reminder_time) сохраняется, дата сдвигается на новый день.
     """
     tz = ZoneInfo(settings.daily_reset_timezone)
 
@@ -51,8 +51,10 @@ async def reset_daily_quests() -> int:
             quest.fail_reason = None
             quest.xp_earned = 0
             quest.gold_earned = 0
-            if quest.deadline is not None:
-                quest.deadline = _shift_deadline_to_today(quest.deadline, tz)
+            if quest.reminder_time is not None:
+                quest.reminder_time = _shift_reminder_to_today(
+                    quest.reminder_time, tz
+                )
 
         await db.commit()
 

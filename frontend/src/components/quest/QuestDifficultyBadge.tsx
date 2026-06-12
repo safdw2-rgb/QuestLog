@@ -1,28 +1,16 @@
 import type { QuestDifficulty } from "@/lib/types";
+import {
+  formatDifficultyLabel,
+  formatDifficultySwords,
+  getDifficultyLevel,
+} from "@/lib/difficulty";
 
-type BadgeTier = "low" | "normal" | "high" | "deadly";
-
-const DIFFICULTY_TIER: Record<QuestDifficulty, BadgeTier> = {
-  trivial: "low",
-  easy: "low",
-  normal: "normal",
-  hard: "high",
-  legendary: "deadly",
-};
-
-const TIER_LABELS: Record<BadgeTier, string> = {
-  low: "Низкий риск",
-  normal: "Обычный контракт",
-  high: "Высокая угроза",
-  deadly: "Смертельно",
-};
-
-const TIER_CLASS: Record<BadgeTier, string> = {
-  low: "difficulty-badge-low",
-  normal: "difficulty-badge-normal",
-  high: "difficulty-badge-high",
-  deadly: "difficulty-badge-deadly",
-};
+const TIER_CLASS = {
+  errand: "difficulty-badge-errand",
+  adventure: "difficulty-badge-adventure",
+  trial: "difficulty-badge-trial",
+  legendary: "difficulty-badge-legendary",
+} as const;
 
 interface QuestDifficultyBadgeProps {
   difficulty: QuestDifficulty;
@@ -33,18 +21,21 @@ export function QuestDifficultyBadge({
   difficulty,
   showLabel = true,
 }: QuestDifficultyBadgeProps) {
-  const tier = DIFFICULTY_TIER[difficulty];
-  const label = TIER_LABELS[tier];
+  const level = getDifficultyLevel(difficulty);
 
   return (
     <span
-      className={`difficulty-badge ${TIER_CLASS[tier]} shrink-0`}
-      title={`Сложность: ${label}`}
-      aria-label={`Сложность: ${label}`}
+      className={`difficulty-badge ${TIER_CLASS[level.tier]} max-w-[9.5rem] shrink-0 sm:max-w-none`}
+      title={formatDifficultyLabel(difficulty)}
+      aria-label={`Сложность: ${formatDifficultyLabel(difficulty)}`}
     >
-      <span className="difficulty-badge-gem" aria-hidden />
+      <span className="difficulty-badge-swords" aria-hidden>
+        {formatDifficultySwords(level.swords)}
+      </span>
       {showLabel && (
-        <span className="difficulty-badge-label hidden sm:inline">{label}</span>
+        <span className="difficulty-badge-label hidden truncate sm:inline">
+          {level.shortLabel}
+        </span>
       )}
     </span>
   );

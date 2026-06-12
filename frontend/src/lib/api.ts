@@ -1,10 +1,13 @@
 import type {
   Adventurer,
+  Faction,
   Quest,
   QuestDifficulty,
   QuestStatus,
   QuestType,
+  QuestBargainResult,
   QuestDeadlineUpdateResult,
+  QuestUpdateResult,
   Reward,
   RewardPurchaseResult,
 } from "@/lib/types";
@@ -59,6 +62,21 @@ export interface CreateQuestPayload {
   xp_reward: number;
   gold_reward: number;
   deadline?: string | null;
+  reminder_time?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  faction_id?: number | null;
+}
+
+export interface QuestAiGeneratePayload {
+  title: string;
+  latitude?: number | null;
+  longitude?: number | null;
+}
+
+export interface QuestScheduleUpdatePayload {
+  deadline?: string | null;
+  reminder_time?: string | null;
 }
 
 export interface QuestAiDetails {
@@ -70,10 +88,16 @@ export interface QuestAiDetails {
   source: string;
 }
 
-export function generateQuestAiDetails(title: string): Promise<QuestAiDetails> {
+export function generateQuestAiDetails(
+  payload: QuestAiGeneratePayload,
+): Promise<QuestAiDetails> {
   return apiFetch<QuestAiDetails>("/api/v1/quests/generate-ai-details", {
     method: "POST",
-    body: JSON.stringify({ title: title.trim() }),
+    body: JSON.stringify({
+      title: payload.title.trim(),
+      latitude: payload.latitude ?? null,
+      longitude: payload.longitude ?? null,
+    }),
   });
 }
 
@@ -88,11 +112,20 @@ export function createQuest(payload: CreateQuestPayload): Promise<Quest> {
       difficulty: payload.difficulty,
       xp_reward: payload.xp_reward,
       gold_reward: payload.gold_reward,
-      faction_id: null,
+      faction_id: payload.faction_id ?? null,
       location_id: null,
       parent_quest_id: null,
       deadline: payload.deadline ?? null,
+      reminder_time: payload.reminder_time ?? null,
+      latitude: payload.latitude ?? null,
+      longitude: payload.longitude ?? null,
     }),
+  });
+}
+
+export function bargainQuestReward(questId: number): Promise<QuestBargainResult> {
+  return apiFetch<QuestBargainResult>(`/api/v1/quests/${questId}/bargain`, {
+    method: "POST",
   });
 }
 
@@ -122,6 +155,90 @@ export function getAdventurer(id: number): Promise<Adventurer> {
   return apiFetch<Adventurer>(`/api/v1/adventurers/${id}`);
 }
 
+export function getFactions(): Promise<Faction[]> {
+  return apiFetch<Faction[]>("/api/v1/factions");
+}
+
+export interface CreateFactionPayload {
+  name: string;
+  icon?: string | null;
+  color?: string | null;
+  description?: string | null;
+}
+
+export interface UpdateFactionPayload {
+  name?: string;
+  icon?: string | null;
+  color?: string | null;
+  description?: string | null;
+}
+
+export function createFaction(payload: CreateFactionPayload): Promise<Faction> {
+  return apiFetch<Faction>("/api/v1/factions", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateFaction(
+  factionId: number,
+  payload: UpdateFactionPayload,
+): Promise<Faction> {
+  return apiFetch<Faction>(`/api/v1/factions/${factionId}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export interface UpdateAdventurerPayload {
+  display_name?: string;
+  username?: string;
+  lore?: string | null;
+}
+
+export function updateAdventurer(
+  adventurerId: number,
+  payload: UpdateAdventurerPayload,
+): Promise<Adventurer> {
+  return apiFetch<Adventurer>(`/api/v1/adventurers/${adventurerId}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function generateAdventurerLore(adventurerId: number): Promise<Adventurer> {
+  return apiFetch<Adventurer>(
+    `/api/v1/adventurers/${adventurerId}/generate-lore`,
+    { method: "POST" },
+  );
+}
+
+export interface UpdateQuestPayload {
+  title?: string;
+  description?: string | null;
+  faction_id?: number | null;
+  deadline?: string | null;
+  reminder_time?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+}
+
+export function updateQuest(
+  questId: number,
+  payload: UpdateQuestPayload,
+): Promise<QuestUpdateResult> {
+  return apiFetch<QuestUpdateResult>(`/api/v1/quests/${questId}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function retireDailyQuest(questId: number): Promise<Quest> {
+  return apiFetch<Quest>(`/api/v1/quests/${questId}/retire-daily`, {
+    method: "POST",
+  });
+}
+
 export function updateQuestStatus(
   questId: number,
   payload: { status: QuestStatus; fail_reason?: string },
@@ -132,15 +249,15 @@ export function updateQuestStatus(
   });
 }
 
-export function updateQuestDeadline(
+export function updateQuestSchedule(
   questId: number,
-  deadline: string | null,
+  payload: QuestScheduleUpdatePayload,
 ): Promise<QuestDeadlineUpdateResult> {
   return apiFetch<QuestDeadlineUpdateResult>(
     `/api/v1/quests/${questId}/deadline`,
     {
       method: "PATCH",
-      body: JSON.stringify({ deadline }),
+      body: JSON.stringify(payload),
     },
   );
 }

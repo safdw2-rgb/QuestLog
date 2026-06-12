@@ -1,20 +1,31 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
+from app.crud.faction import REPUTATION_LOSS_ON_FAIL, adjust_faction_reputation
 from app.db.session import async_session_factory
 from app.models.enums import QuestStatus, QuestType
 from app.models.quest import Quest
 from app.models.quest_notification import QuestNotificationSent
-from app.services.telegram_notifier import format_quest_alert, send_telegram_message
+from app.services.telegram_notifier import (
+    format_deadline_warning,
+    format_quest_alarm,
+    format_quest_failed,
+    send_telegram_message,
+)
 
 logger = logging.getLogger(__name__)
 
-REGULAR_LEAD_MINUTES = 15
+KIND_ALARM = "alarm"
+KIND_DEADLINE_WARNING = "deadline_warning"
+KIND_DEADLINE_FAILED = "deadline_failed"
+
+DEADLINE_WARNING_LEAD_MINUTES = 15
+AUTO_FAIL_REASON = "Дедлайн истёк — контракт провален автоматически."
 
 
 def _is_same_minute(a: datetime, b: datetime) -> bool:
@@ -25,6 +36,29 @@ def _is_same_minute(a: datetime, b: datetime) -> bool:
         and a.hour == b.hour
         and a.minute == b.minute
     )
+
+
+def _slot_key(dt: datetime) -> str:
+    return dt.strftime("%Y-%m-%d-%H:%M")
+
+
+def _alarm_instant(quest: Quest, now: datetime, tz: ZoneInfo) -> datetime | None:
+    if quest.reminder_time is None:
+        return None
+
+    local_reminder = quest.reminder_time.astimezone(tz)
+
+    if quest.quest_type == QuestType.DAILY:
+        return datetime(
+            now.year,
+            now.month,
+            now.day,
+            local_reminder.hour,
+            local_reminder.minute,
+            tzinfo=tz,
+        )
+
+    return local_reminder
 
 
 async def _already_sent(
@@ -57,21 +91,43 @@ async def _mark_sent(
     )
 
 
-async def _notify_quest(
+async def _send_notification(
     db: AsyncSession,
     quest: Quest,
     kind: str,
     slot_key: str,
-) -> None:
+    text: str,
+) -> bool:
     if await _already_sent(db, quest.id, kind, slot_key):
-        return
+        return False
 
-    sent = await send_telegram_message(format_quest_alert(quest.title))
+    sent = await send_telegram_message(text)
     if not sent:
-        return
+        return False
 
     await _mark_sent(db, quest.id, kind, slot_key)
-    logger.info("Telegram alert sent for quest %s (%s)", quest.id, kind)
+    logger.info("Telegram %s sent for quest %s", kind, quest.id)
+    return True
+
+
+async def _fail_quest_at_deadline(db: AsyncSession, quest: Quest) -> None:
+    if quest.status != QuestStatus.ACTIVE:
+        return
+
+    now = datetime.now(UTC)
+    quest.status = QuestStatus.FAILED
+    quest.failed_at = now
+    quest.completed_at = None
+    quest.fail_reason = AUTO_FAIL_REASON
+    quest.xp_earned = 0
+    quest.gold_earned = 0
+    if quest.faction_id is not None and quest.quest_type != QuestType.DAILY:
+        await adjust_faction_reputation(
+            db,
+            quest.faction_id,
+            -REPUTATION_LOSS_ON_FAIL,
+        )
+    logger.info("Quest %s auto-failed at deadline", quest.id)
 
 
 async def check_quest_reminders() -> None:
@@ -82,35 +138,59 @@ async def check_quest_reminders() -> None:
         stmt = (
             select(Quest)
             .where(Quest.status == QuestStatus.ACTIVE)
-            .where(Quest.deadline.is_not(None))
+            .where(
+                or_(
+                    Quest.deadline.is_not(None),
+                    Quest.reminder_time.is_not(None),
+                )
+            )
         )
         result = await db.execute(stmt)
         quests = list(result.scalars().all())
 
         for quest in quests:
-            if quest.deadline is None:
-                continue
-
-            local_deadline = quest.deadline.astimezone(tz)
-
-            if quest.quest_type == QuestType.DAILY:
-                reminder_today = datetime(
-                    now.year,
-                    now.month,
-                    now.day,
-                    local_deadline.hour,
-                    local_deadline.minute,
-                    tzinfo=tz,
+            alarm_at = _alarm_instant(quest, now, tz)
+            if alarm_at is not None and _is_same_minute(now, alarm_at):
+                await _send_notification(
+                    db,
+                    quest,
+                    KIND_ALARM,
+                    _slot_key(alarm_at),
+                    format_quest_alarm(quest.title),
                 )
-                if not _is_same_minute(now, reminder_today):
-                    continue
-                slot_key = reminder_today.strftime("%Y-%m-%d-%H:%M")
-                await _notify_quest(db, quest, "daily", slot_key)
-            else:
-                lead_at = local_deadline - timedelta(minutes=REGULAR_LEAD_MINUTES)
-                if not _is_same_minute(now, lead_at):
-                    continue
-                slot_key = lead_at.strftime("%Y-%m-%d-%H:%M")
-                await _notify_quest(db, quest, "deadline_15m", slot_key)
+
+            if (
+                quest.quest_type in (QuestType.MAIN, QuestType.SIDE)
+                and quest.deadline is not None
+            ):
+                local_deadline = quest.deadline.astimezone(tz)
+                warning_at = local_deadline - timedelta(
+                    minutes=DEADLINE_WARNING_LEAD_MINUTES
+                )
+
+                if _is_same_minute(now, warning_at):
+                    await _send_notification(
+                        db,
+                        quest,
+                        KIND_DEADLINE_WARNING,
+                        _slot_key(warning_at),
+                        format_deadline_warning(quest.title),
+                    )
+
+                if _is_same_minute(now, local_deadline):
+                    slot_key = _slot_key(local_deadline)
+                    if not await _already_sent(
+                        db, quest.id, KIND_DEADLINE_FAILED, slot_key
+                    ):
+                        await send_telegram_message(
+                            format_quest_failed(quest.title),
+                        )
+                        await _fail_quest_at_deadline(db, quest)
+                        await _mark_sent(
+                            db,
+                            quest.id,
+                            KIND_DEADLINE_FAILED,
+                            slot_key,
+                        )
 
         await db.commit()
