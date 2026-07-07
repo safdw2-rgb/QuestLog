@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import type { QuestScheduleUpdatePayload } from "@/lib/api";
 import { QuestDeadlineCountdown } from "@/components/quest/QuestDeadlineCountdown";
@@ -8,18 +8,22 @@ import { QuestDeadlineEditor } from "@/components/quest/QuestDeadlineEditor";
 import { QuestDifficultyBadge } from "@/components/quest/QuestDifficultyBadge";
 import { QuestSubquests } from "@/components/quest/QuestSubquests";
 import { useNow } from "@/hooks/useNow";
+import { RpgIcon } from "@/components/rpg/RpgIcon";
+import { getDifficultyLevel } from "@/lib/difficulty";
+import { resolveFactionIcon } from "@/lib/faction-utils";
+import { RPG_UI, resolveQuestIconFallback, resolveQuestIconSrc } from "@/lib/rpg-assets";
 import {
   formatDeadlineDateTime,
   formatReminderTime,
   isDeadlineOverdue,
 } from "@/lib/deadline";
-import { resolveFactionIcon } from "@/lib/faction-utils";
 import { getReputationLevel } from "@/lib/faction-reputation";
 import { BARGAIN_COST, type Faction, type Quest } from "@/lib/types";
 
 interface QuestCardProps {
   quest: Quest;
   isDailyTab?: boolean;
+  isFailedTab?: boolean;
   subquests?: Quest[];
   isUpdating?: boolean;
   updatingSubquestId?: number | null;
@@ -37,6 +41,7 @@ interface QuestCardProps {
   onEdit?: (quest: Quest) => void;
   faction?: Faction | null;
   adventurerGold?: number;
+  currentUserId?: number;
   focus?: boolean;
   onFocused?: () => void;
 }
@@ -44,6 +49,7 @@ interface QuestCardProps {
 export function QuestCard({
   quest,
   isDailyTab = false,
+  isFailedTab = false,
   subquests = [],
   isUpdating = false,
   updatingSubquestId = null,
@@ -58,6 +64,7 @@ export function QuestCard({
   onEdit,
   faction = null,
   adventurerGold = 0,
+  currentUserId,
   focus = false,
   onFocused,
 }: QuestCardProps) {
@@ -75,9 +82,7 @@ export function QuestCard({
   const showDailyDoneState = isDailyTab && isDailyCompletedToday;
   const canComplete = isActive && Boolean(onComplete);
   const canFail =
-    isActive &&
-    Boolean(onFail) &&
-    !(isDailyTab && quest.quest_type === "daily");
+    isActive && Boolean(onFail) && quest.quest_type !== "daily";
   const hasSubquests = subquests.length > 0;
   const incompleteSubquests = subquests.filter((s) => s.status === "active");
   const allSubquestsDone =
@@ -97,11 +102,30 @@ export function QuestCard({
     Boolean(onBargain);
   const canAffordBargain = adventurerGold >= BARGAIN_COST;
   const canRetireDaily =
-    isDailyTab && isDaily && isActive && Boolean(onRetireDaily);
+    isDaily &&
+    (isActive || isDailyCompletedToday) &&
+    Boolean(onRetireDaily);
   const hasMapLocation = quest.latitude != null && quest.longitude != null;
   const canShowOnMap = hasMapLocation && Boolean(onShowOnMap);
-  const canEdit = isActive && Boolean(onEdit);
+  const isMentorQuest =
+    quest.creator_user_id != null &&
+    currentUserId != null &&
+    quest.creator_user_id !== currentUserId;
+  const canEdit = isActive && Boolean(onEdit) && !isMentorQuest;
   const factionIcon = faction ? resolveFactionIcon(faction) : null;
+  const questIconSrc = resolveQuestIconSrc(quest, { isFailedTab });
+  const questIconFallback = resolveQuestIconFallback(quest, factionIcon, {
+    isFailedTab,
+  });
+  const difficultyTier = getDifficultyLevel(quest.difficulty).tier;
+
+  const questState: string | undefined = showDailyDoneState
+    ? "daily-done"
+    : isOverdue
+    ? "overdue"
+    : quest.status !== "active"
+    ? quest.status
+    : undefined;
 
   useEffect(() => {
     if (!focus) {
@@ -190,21 +214,22 @@ export function QuestCard({
   return (
     <article
       id={`quest-card-${quest.id}`}
-      className={`journal-panel quest-card transition ${
+      data-difficulty-tier={difficultyTier}
+      data-quest-state={questState}
+      className={`rpg-quest-scroll quest-card min-w-0 shadow-none transition ${
         isUpdating ? "opacity-70" : ""
-      } ${showDailyDoneState ? "quest-card-daily-done" : ""} ${
-        isOverdue ? "quest-card-overdue" : ""
-      } ${expanded ? "shadow-journal-hover" : "hover:shadow-journal-hover"}`}
+      }`}
     >
       <button
         type="button"
-        className="quest-card-summary flex w-full min-w-0 items-start gap-3 px-4 py-3 text-left"
+        className="quest-card-summary flex w-full min-w-0 items-center gap-2 px-1 py-1 text-left sm:gap-3 sm:px-2 sm:py-1.5"
         onClick={toggleExpanded}
         aria-expanded={expanded}
         aria-controls={`quest-body-${quest.id}`}
       >
+        {/* Expand/collapse chevron */}
         <span
-          className={`quest-card-chevron mt-0.5 shrink-0 text-ink-muted transition-transform duration-300 ${
+          className={`quest-card-chevron shrink-0 text-[#3a2214]/60 transition-transform duration-300 ${
             expanded ? "rotate-90" : ""
           }`}
           aria-hidden
@@ -212,18 +237,24 @@ export function QuestCard({
           ▸
         </span>
 
+        {/* Quest-type icon wrapped in inventory slot */}
+        <span className="rpg-quest-icon-slot" aria-hidden>
+          <RpgIcon
+            src={questIconSrc}
+            fallbackEmoji={questIconFallback}
+            alt=""
+            className="inline-block h-4 w-4 shrink-0 object-contain"
+            fallbackClassName="quest-faction-emoji shrink-0 text-sm"
+          />
+        </span>
+
         <div className="min-w-0 flex-1">
-          <h3 className="flex min-w-0 items-start gap-1.5 font-display text-base leading-snug text-ink transition-all duration-300 sm:text-lg">
-            {factionIcon && (
-              <span className="quest-faction-emoji shrink-0" aria-hidden>
-                {factionIcon}
-              </span>
-            )}
+          <h3 className="flex min-w-0 items-center font-display text-sm leading-snug text-ink transition-all duration-300 sm:text-base">
             <span
               className={`min-w-0 flex-1 ${
                 expanded
                   ? "whitespace-normal break-words"
-                  : "truncate"
+                  : "line-clamp-2 break-words whitespace-normal"
               }`}
             >
               {quest.title}
@@ -231,62 +262,63 @@ export function QuestCard({
           </h3>
         </div>
 
-        <div className="flex shrink-0 flex-col items-end gap-1.5">
-        {hasActiveDeadline && quest.deadline && onUpdateSchedule && (
-          <QuestDeadlineEditor
-            questId={quest.id}
-            datetime={quest.deadline}
-            status={quest.status}
-            questType={quest.quest_type}
-            field="deadline"
-            adventurerGold={adventurerGold}
-            compact
-            onSave={onUpdateSchedule}
-          />
-        )}
-        {hasActiveDeadline && quest.deadline && !onUpdateSchedule && (
-          <QuestDeadlineCountdown
-            datetime={quest.deadline}
-            status={quest.status}
-            field="deadline"
-            questType={quest.quest_type}
-            compact
-          />
-        )}
-
-        {!hasActiveDeadline &&
-          hasActiveReminder &&
-          quest.reminder_time &&
-          onUpdateSchedule && (
+        <div className="quest-card-meta mt-1 flex shrink-0 items-center gap-2 sm:mt-0 sm:gap-3">
+          {hasActiveDeadline && quest.deadline && onUpdateSchedule && (
             <QuestDeadlineEditor
               questId={quest.id}
-              datetime={quest.reminder_time}
+              datetime={quest.deadline}
               status={quest.status}
               questType={quest.quest_type}
-              field="reminder"
+              field="deadline"
               adventurerGold={adventurerGold}
               compact
               onSave={onUpdateSchedule}
             />
           )}
-        {!hasActiveDeadline &&
-          hasActiveReminder &&
-          quest.reminder_time &&
-          !onUpdateSchedule && (
+          {hasActiveDeadline && quest.deadline && !onUpdateSchedule && (
             <QuestDeadlineCountdown
-              datetime={quest.reminder_time}
+              datetime={quest.deadline}
               status={quest.status}
-              field="reminder"
+              field="deadline"
               questType={quest.quest_type}
               compact
             />
           )}
 
-        {showDailyDoneState ? (
-          <span className="daily-done-badge shrink-0">Выполнено сегодня</span>
-        ) : (
-          <QuestDifficultyBadge difficulty={quest.difficulty} />
-        )}
+          {!hasActiveDeadline &&
+            hasActiveReminder &&
+            quest.reminder_time &&
+            onUpdateSchedule && (
+              <QuestDeadlineEditor
+                questId={quest.id}
+                datetime={quest.reminder_time}
+                status={quest.status}
+                questType={quest.quest_type}
+                field="reminder"
+                adventurerGold={adventurerGold}
+                compact
+                onSave={onUpdateSchedule}
+              />
+            )}
+          {!hasActiveDeadline &&
+            hasActiveReminder &&
+            quest.reminder_time &&
+            !onUpdateSchedule && (
+              <QuestDeadlineCountdown
+                datetime={quest.reminder_time}
+                status={quest.status}
+                field="reminder"
+                questType={quest.quest_type}
+                compact
+              />
+            )}
+
+          {showDailyDoneState ? (
+            <span className="daily-done-badge shrink-0">Выполнено сегодня</span>
+          ) : (
+            <QuestDifficultyBadge difficulty={quest.difficulty} compact />
+          )}
+
         </div>
       </button>
 
@@ -299,23 +331,45 @@ export function QuestCard({
             <p className="text-xs text-ink-muted">
               {faction.icon ? `${faction.icon} ` : ""}
               {faction.name} · {getReputationLevel(faction.reputation_points)} (
-              {faction.reputation_points} очков)
+              {faction.reputation_points} очк. на неделе)
+            </p>
+          )}
+
+          {isMentorQuest && (
+            <p className="mentor-quest-badge mt-2 inline-flex items-center gap-1.5 rounded-full border border-amber-400/50 bg-amber-50/90 px-2.5 py-1 text-xs font-medium text-amber-950">
+              <span aria-hidden>🛡️</span>
+              Задание от Наставника
             </p>
           )}
 
           {quest.description ? (
-            <p className="mt-3 text-sm leading-relaxed text-ink/80">
-              {quest.description}
-            </p>
+            <div className="quest-card-desc-scroll rpg-fantasy-vscroll-sm mt-3">
+              <p className="text-xs leading-snug text-[#3a2214]/90">
+                {quest.description}
+              </p>
+            </div>
           ) : (
-            <p className="mt-3 text-sm italic text-ink-muted">
+            <p className="mt-2 text-xs italic text-[#4a3224]">
               Описание не указано.
             </p>
           )}
 
           <div className="mt-4 flex flex-wrap gap-3">
             <RewardBadge label="Награда XP" value={`+${quest.xp_reward}`} />
-            <RewardBadge label="Золото" value={`+${quest.gold_reward} 🪙`} />
+            <RewardBadge
+              label="Золото"
+              value={
+                <span className="inline-flex items-center gap-1">
+                  +{quest.gold_reward}
+                  <RpgIcon
+                    src={RPG_UI.goldBag}
+                    fallbackEmoji="🪙"
+                    alt=""
+                    className="inline-block h-5 w-5 shrink-0 align-middle object-contain"
+                  />
+                </span>
+              }
+            />
 
             {hasActiveDeadline && quest.deadline && onUpdateSchedule ? (
               <QuestDeadlineEditor
@@ -592,7 +646,7 @@ export function QuestCard({
   );
 }
 
-function RewardBadge({ label, value }: { label: string; value: string }) {
+function RewardBadge({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="rounded-lg border border-gold/25 bg-gold/5 px-3 py-2">
       <p className="text-[10px] uppercase tracking-wide text-ink-muted">{label}</p>

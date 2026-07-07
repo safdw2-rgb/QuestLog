@@ -20,7 +20,8 @@ export function QuestJournalTabs({
 }: QuestJournalTabsProps) {
   return (
     <nav
-      className="journal-tabs mb-5"
+      className="rpg-game-tab-nav mb-4 flex flex-row flex-nowrap overflow-x-auto md:flex-wrap"
+      style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}
       role="tablist"
       aria-label="Разделы квестового дневника"
     >
@@ -34,14 +35,12 @@ export function QuestJournalTabs({
             type="button"
             role="tab"
             aria-selected={isActive}
-            className={`journal-tab ${isActive ? "journal-tab-active" : ""}`}
+            className={`rpg-game-tab rpg-game-tab-sm ${isActive ? "rpg-game-tab-active" : ""}`}
             onClick={() => onTabChange(tab.id)}
           >
-            <span className="journal-tab-marker" aria-hidden>
-              {tab.marker}
-            </span>
+            <span aria-hidden>{tab.marker}</span>
             <span>{tab.label}</span>
-            <span className="journal-tab-count">{count}</span>
+            <span className="rpg-text-link-count"> {count}</span>
           </button>
         );
       })}

@@ -1,25 +1,25 @@
 import logging
 import re
 
-import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.models.adventurer import Adventurer
 from app.models.quest import Quest
-from app.services.ai_generator import GEMINI_API_URL, GeminiGenerationError
+from app.services.gemini_client import GeminiGenerationError, generate_content
 
 logger = logging.getLogger(__name__)
 
-MAX_LORE_LENGTH = 1000
+MAX_LORE_LENGTH = 2500
 
 HERO_LORE_SYSTEM_PROMPT = """Ты — Лютик (Dandelion) из игры «Ведьмак 3»: бард, хроникёр, остроумный рассказчик.
 Составь художественное, балладное, слегка ироничное описание героя по списку его недавних подвигов.
 
-Текст должен быть на русском языке и строго не превышать 1000 символов.
+Текст должен быть на русском языке и не превышать 2000 символов.
 Пиши от третьего лица, как от автора баллады. Не используй markdown.
 Не выдумывай подвиги, которых нет в списке — только творчески перескажи указанные квесты.
-"""
+Каждый ответ должен быть уникальным, без шаблонных клише.
+Обязательно дописывай текст до конца — не обрывай на полуслове."""
 
 
 class HeroLoreGeneratorService:
@@ -48,6 +48,7 @@ class HeroLoreGeneratorService:
             try:
                 return await self._generate_via_gemini(
                     display_name=adventurer.display_name,
+                    hero_level=adventurer.level,
                     quest_titles=quest_titles,
                 )
             except Exception as exc:
@@ -61,51 +62,43 @@ class HeroLoreGeneratorService:
 
         return self._build_fallback_lore(adventurer.display_name, quest_titles)
 
-    def _build_user_prompt(self, display_name: str, quest_titles: list[str]) -> str:
+    def _build_user_prompt(
+        self,
+        display_name: str,
+        hero_level: int,
+        quest_titles: list[str],
+    ) -> str:
         quests_line = ", ".join(f"«{title}»" for title in quest_titles[:10])
         return (
             f"Имя героя: {display_name}\n"
+            f"Уровень героя: {hero_level}\n"
             f"Недавние выполненные квесты: {quests_line}\n\n"
-            "Напиши лор персонажа в стиле Лютика."
+            "Напиши уникальный лор персонажа в стиле Лютика."
         )
 
     async def _generate_via_gemini(
         self,
         *,
         display_name: str,
+        hero_level: int,
         quest_titles: list[str],
     ) -> str:
-        payload = {
-            "contents": [
-                {
-                    "parts": [
-                        {
-                            "text": (
-                                f"{HERO_LORE_SYSTEM_PROMPT}\n\n"
-                                f"{self._build_user_prompt(display_name, quest_titles)}"
-                            ),
-                        },
-                    ],
-                },
-            ],
-            "generationConfig": {
-                "temperature": 0.9,
-                "maxOutputTokens": 512,
-            },
-        }
-
-        async with httpx.AsyncClient(timeout=45.0) as client:
-            response = await client.post(
-                GEMINI_API_URL,
-                params={"key": settings.gemini_api_key},
-                json=payload,
-            )
-
-        if response.is_error:
-            response.raise_for_status()
-
-        data = response.json()
-        content = data["candidates"][0]["content"]["parts"][0]["text"]
+        content = await generate_content(
+            system_instruction=HERO_LORE_SYSTEM_PROMPT,
+            user_prompt=self._build_user_prompt(display_name, hero_level, quest_titles),
+            temperature=0.92,
+            # Generous token budget so Lore fits completely.
+            max_output_tokens=2000,
+            # Disable thinking: lore is creative writing, not reasoning.
+            # Without this Gemini 2.5 Flash burns most tokens internally
+            # and returns only ~145 chars of actual text.
+            thinking_budget=0,
+        )
+        logger.info(
+            "Hero lore raw from Gemini: %d chars — %s…",
+            len(content),
+            content[:120],
+        )
         return self._normalize_lore(content)
 
     @staticmethod

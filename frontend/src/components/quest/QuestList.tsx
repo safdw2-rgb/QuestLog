@@ -11,6 +11,7 @@ interface QuestListProps {
   emptyMessage?: string;
   showActions?: boolean;
   isDailyTab?: boolean;
+  isFailedTab?: boolean;
   updatingQuestId?: number | null;
   onComplete?: (questId: number) => Promise<void>;
   onFail?: (questId: number, failReason: string) => Promise<void>;
@@ -25,6 +26,7 @@ interface QuestListProps {
   onShowOnMap?: (quest: Quest) => void;
   onEdit?: (quest: Quest) => void;
   adventurerGold?: number;
+  currentUserId?: number;
   focusQuestId?: number | null;
   onFocusConsumed?: () => void;
 }
@@ -36,6 +38,7 @@ export function QuestList({
   emptyMessage = EMPTY_TAB_MESSAGE,
   showActions = false,
   isDailyTab = false,
+  isFailedTab = false,
   updatingQuestId = null,
   onComplete,
   onFail,
@@ -47,13 +50,14 @@ export function QuestList({
   onShowOnMap,
   onEdit,
   adventurerGold = 0,
+  currentUserId,
   focusQuestId = null,
   onFocusConsumed,
 }: QuestListProps) {
   const questPool = allQuests ?? quests;
   if (quests.length === 0) {
     return (
-      <div className="journal-panel border-dashed border-ink/15 p-10 text-center">
+      <div className="border border-dashed border-[#3a2214]/20 p-10 text-center text-[#4a3224]">
         <p className="font-display text-lg leading-relaxed text-ink-muted">
           {emptyMessage}
         </p>
@@ -62,17 +66,18 @@ export function QuestList({
   }
 
   return (
-    <ul className="flex flex-col gap-2">
+    <ul className="flex min-w-0 flex-col gap-2">
       {quests.map((quest) => (
-        <li key={quest.id}>
+        <li key={quest.id} className="min-w-0">
           <QuestCard
             quest={quest}
             isDailyTab={isDailyTab}
+            isFailedTab={isFailedTab}
             subquests={getSubquests(questPool, quest.id)}
             isUpdating={updatingQuestId === quest.id}
             updatingSubquestId={updatingQuestId}
             onComplete={showActions ? onComplete : undefined}
-            onFail={showActions && !isDailyTab ? onFail : undefined}
+            onFail={showActions ? onFail : undefined}
             onAddSubquest={
               showActions && onAddSubquest
                 ? (title) => onAddSubquest(quest.id, title)
@@ -81,9 +86,7 @@ export function QuestList({
             onToggleSubquest={showActions ? onToggleSubquest : undefined}
             onUpdateSchedule={showActions ? onUpdateSchedule : undefined}
             onBargain={showActions ? onBargain : undefined}
-            onRetireDaily={
-              showActions && isDailyTab ? onRetireDaily : undefined
-            }
+            onRetireDaily={showActions ? onRetireDaily : undefined}
             onShowOnMap={onShowOnMap}
             onEdit={showActions ? onEdit : undefined}
             faction={
@@ -91,6 +94,7 @@ export function QuestList({
               null
             }
             adventurerGold={adventurerGold}
+            currentUserId={currentUserId}
             focus={focusQuestId === quest.id}
             onFocused={focusQuestId === quest.id ? onFocusConsumed : undefined}
           />

@@ -1,16 +1,28 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 
-import { LocationPickerMiniMap } from "@/components/map/LocationPickerMiniMap";
-import { updateQuest } from "@/lib/api";
+const LocationPickerMiniMap = dynamic(
+  () =>
+    import("@/components/map/LocationPickerMiniMap").then(
+      (m) => m.LocationPickerMiniMap,
+    ),
+  { ssr: false },
+);
+import { improveQuestAiDetails, updateQuest } from "@/lib/api";
+import { SYS_ICON } from "@/lib/rpg-assets";
 import {
   dailyTimeToIso,
   isoToDailyTime,
   isoToDatetimeLocal,
   localDatetimeToIso,
 } from "@/lib/deadline";
-import type { Faction, Quest, QuestUpdateResult } from "@/lib/types";
+import type { Faction, Quest, QuestFrequency, QuestUpdateResult } from "@/lib/types";
+import {
+  DEFAULT_QUEST_FREQUENCY,
+  QUEST_FREQUENCY_OPTIONS,
+} from "@/lib/quest-frequency";
 import { DEADLINE_RESCHEDULE_COST } from "@/lib/types";
 
 interface QuestEditModalProps {
@@ -26,6 +38,7 @@ interface EditFormState {
   title: string;
   description: string;
   factionId: string;
+  frequency: QuestFrequency;
   deadlineLocal: string;
   reminderLocal: string;
   reminderTime: string;
@@ -39,6 +52,7 @@ function questToForm(quest: Quest): EditFormState {
     title: quest.title,
     description: quest.description ?? "",
     factionId: quest.faction_id ? String(quest.faction_id) : "",
+    frequency: quest.frequency ?? DEFAULT_QUEST_FREQUENCY,
     deadlineLocal: quest.deadline ? isoToDatetimeLocal(quest.deadline) : "",
     reminderLocal:
       !isDaily && quest.reminder_time
@@ -63,6 +77,8 @@ export function QuestEditModal({
 }: QuestEditModalProps) {
   const [form, setForm] = useState<EditFormState | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [improving, setImproving] = useState(false);
+  const [aiSource, setAiSource] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -116,6 +132,46 @@ export function QuestEditModal({
     Boolean(originalDeadlineDate || newDeadlineDate);
   const canAffordReschedule = adventurerGold >= DEADLINE_RESCHEDULE_COST;
 
+  async function handleImproveWithAi() {
+    if (!form || improving) {
+      return;
+    }
+
+    const title = form.title.trim();
+    if (!title) {
+      setError("Сначала укажите название квеста");
+      return;
+    }
+
+    setImproving(true);
+    setError(null);
+    setAiSource(null);
+
+    try {
+      const result = await improveQuestAiDetails(
+        title,
+        form.description,
+        form.factionId ? Number(form.factionId) : null,
+      );
+      setForm((prev) =>
+        prev
+          ? {
+              ...prev,
+              title: result.title.trim(),
+              description: result.description.trim(),
+            }
+          : prev,
+      );
+      setAiSource(result.source);
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "Не удалось улучшить квест с помощью ИИ",
+      );
+    } finally {
+      setImproving(false);
+    }
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const title = form!.title.trim();
@@ -145,6 +201,7 @@ export function QuestEditModal({
         reminder_time: isDaily
           ? dailyTimeToIso(form!.reminderTime)
           : localDatetimeToIso(form!.reminderLocal),
+        frequency: isDaily ? form!.frequency : undefined,
       });
       onUpdated(result);
       onClose();
@@ -171,33 +228,47 @@ export function QuestEditModal({
         aria-label="Закрыть"
       />
 
+      {/* ─── Elastic parchment panel — stretches cleanly to any height ─── */}
       <div
-        className={`quest-create-panel journal-panel relative z-10 flex w-full max-w-lg flex-col overflow-x-hidden overflow-y-hidden rounded-t-2xl transition-transform duration-300 sm:max-h-[90vh] sm:rounded-xl sm:transition-none ${
+        className={`quest-create-panel rpg-elastic-panel relative z-10 w-full max-w-lg overflow-hidden p-6 transition-transform duration-300 sm:transition-none ${
           visible ? "translate-y-0" : "translate-y-full sm:translate-y-0"
         }`}
       >
-        <header className="shrink-0 border-b border-ink/10 px-4 py-3 md:px-8 md:py-5">
-          <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">
+        {/* Close button — top right corner */}
+        <button
+          type="button"
+          className="absolute right-3 top-3 z-20 flex h-8 w-8 items-center justify-center opacity-70 transition hover:opacity-100"
+          onClick={onClose}
+          aria-label="Закрыть"
+        >
+          <img src={SYS_ICON.xCircle} alt="" width={22} height={22} style={{ imageRendering: 'pixelated' }} />
+        </button>
+
+        {/* Title on parchment — dark ink */}
+        <div className="mb-3 pr-8">
+          <p className="text-xs uppercase tracking-[0.25em] text-[#4a3224]/60">
             Редактирование записи
           </p>
           <h2
             id="quest-edit-title"
-            className="mt-0.5 font-display text-xl text-ink md:text-2xl"
+            className="font-display text-xl tracking-wide text-[#3a2214]"
           >
             ✏️ Редактировать квест
           </h2>
-        </header>
+        </div>
 
-        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
-          <div className="quest-create-body min-h-0 flex-1 space-y-3 overflow-x-hidden overflow-y-auto px-4 py-3 md:space-y-4 md:px-8 md:py-5">
+        <form onSubmit={handleSubmit}>
+          {/* ── Scrollable form body ── */}
+          <div
+            className="overflow-y-auto space-y-3 bg-transparent pr-1"
+            style={{ maxHeight: '50vh' }}
+          >
             <Field label="Название" required>
               <input
                 className="journal-input"
                 value={form.title}
                 onChange={(e) =>
-                  setForm((prev) =>
-                    prev ? { ...prev, title: e.target.value } : prev,
-                  )
+                  setForm((prev) => prev ? { ...prev, title: e.target.value } : prev)
                 }
                 maxLength={200}
                 required
@@ -206,15 +277,29 @@ export function QuestEditModal({
 
             <Field label="Описание">
               <textarea
-                className="journal-input min-h-20 resize-y"
+                className="journal-input resize-y"
                 value={form.description}
                 onChange={(e) =>
-                  setForm((prev) =>
-                    prev ? { ...prev, description: e.target.value } : prev,
-                  )
+                  setForm((prev) => prev ? { ...prev, description: e.target.value } : prev)
                 }
-                rows={3}
+                rows={2}
               />
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  className="journal-button-secondary text-xs"
+                  onClick={handleImproveWithAi}
+                  disabled={submitting || improving}
+                >
+                  <img src={SYS_ICON.sparkles} alt="" width={16} height={16} style={{ imageRendering: 'pixelated', display: 'inline-block', verticalAlign: 'middle', marginRight: 4 }} aria-hidden />
+                  {improving ? "ИИ думает..." : "Улучшить с помощью ИИ"}
+                </button>
+                {aiSource && (
+                  <span className="text-[10px] uppercase tracking-wide text-ink-muted">
+                    источник: {aiSource}
+                  </span>
+                )}
+              </div>
             </Field>
 
             <Field label="Фракция">
@@ -222,97 +307,99 @@ export function QuestEditModal({
                 className="journal-input"
                 value={form.factionId}
                 onChange={(e) =>
-                  setForm((prev) =>
-                    prev ? { ...prev, factionId: e.target.value } : prev,
-                  )
+                  setForm((prev) => prev ? { ...prev, factionId: e.target.value } : prev)
                 }
               >
                 <option value="">Без фракции</option>
-                {factions.map((faction) => (
-                  <option key={faction.id} value={String(faction.id)}>
-                    {faction.icon ? `${faction.icon} ` : ""}
-                    {faction.name}
+                {factions.map((f) => (
+                  <option key={f.id} value={String(f.id)}>
+                    {f.icon ? `${f.icon} ` : ""}{f.name}
                   </option>
                 ))}
               </select>
             </Field>
 
-            <Field label="Локация на карте">
-              <LocationPickerMiniMap
-                latitude={form.latitude}
-                longitude={form.longitude}
-                onChange={(latitude, longitude) =>
-                  setForm((prev) =>
-                    prev ? { ...prev, latitude, longitude } : prev,
-                  )
-                }
-              />
-            </Field>
-
             {isDaily ? (
-              <Field label="Время оповещения">
-                <input
-                  className="journal-input"
-                  type="time"
-                  value={form.reminderTime}
-                  onChange={(e) =>
-                    setForm((prev) =>
-                      prev ? { ...prev, reminderTime: e.target.value } : prev,
-                    )
-                  }
-                />
-              </Field>
+              <div className="grid grid-cols-2 gap-2">
+                <Field label="Периодичность">
+                  <select
+                    className="journal-input"
+                    value={form.frequency}
+                    onChange={(e) =>
+                      setForm((prev) =>
+                        prev ? { ...prev, frequency: e.target.value as QuestFrequency } : prev
+                      )
+                    }
+                  >
+                    {QUEST_FREQUENCY_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="Время оповещения">
+                  <input
+                    className="journal-input"
+                    type="time"
+                    value={form.reminderTime}
+                    onChange={(e) =>
+                      setForm((prev) => prev ? { ...prev, reminderTime: e.target.value } : prev)
+                    }
+                  />
+                </Field>
+              </div>
             ) : (
-              <>
+              <div className="grid grid-cols-2 gap-2">
                 <Field label="Дедлайн">
                   <input
                     className="journal-input"
                     type="datetime-local"
                     value={form.deadlineLocal}
                     onChange={(e) =>
-                      setForm((prev) =>
-                        prev
-                          ? { ...prev, deadlineLocal: e.target.value }
-                          : prev,
-                      )
+                      setForm((prev) => prev ? { ...prev, deadlineLocal: e.target.value } : prev)
                     }
                   />
                   {deadlineDateWillChange && (
-                    <p className="mt-1.5 text-xs text-amber-900/80">
-                      Смена даты дедлайна спишет {DEADLINE_RESCHEDULE_COST} 🪙
-                      {!canAffordReschedule && " — недостаточно золота"}
+                    <p className="mt-1 text-xs text-amber-900/80">
+                      Смена даты спишет {DEADLINE_RESCHEDULE_COST} 🪙
+                      {!canAffordReschedule && " — мало золота"}
                     </p>
                   )}
                 </Field>
-
                 <Field label="Будильник">
                   <input
                     className="journal-input"
                     type="datetime-local"
                     value={form.reminderLocal}
                     onChange={(e) =>
-                      setForm((prev) =>
-                        prev
-                          ? { ...prev, reminderLocal: e.target.value }
-                          : prev,
-                      )
+                      setForm((prev) => prev ? { ...prev, reminderLocal: e.target.value } : prev)
                     }
                   />
                 </Field>
-              </>
+              </div>
             )}
 
+            <Field label="Локация на карте">
+              <LocationPickerMiniMap
+                latitude={form.latitude}
+                longitude={form.longitude}
+                onChange={(latitude, longitude) =>
+                  setForm((prev) => prev ? { ...prev, latitude, longitude } : prev)
+                }
+              />
+            </Field>
+
             {error && (
-              <p className="rounded-lg border border-rose-300/50 bg-rose-50/80 px-3 py-2 text-sm text-rose-900">
+              <p className="rounded border border-rose-300/50 bg-rose-50/80 px-3 py-1.5 text-sm text-rose-900">
                 {error}
               </p>
             )}
           </div>
 
-          <div className="quest-create-footer shrink-0 flex flex-wrap justify-end gap-2 border-t border-ink/10 bg-parchment/95 px-4 py-3 backdrop-blur-sm md:px-8">
+          {/* ── Footer buttons ── */}
+          <div className="mt-3 flex flex-wrap justify-end gap-2">
             <button
               type="button"
-              className="journal-button-secondary"
+              className="rpg-game-button"
               onClick={onClose}
               disabled={submitting}
             >
@@ -320,10 +407,10 @@ export function QuestEditModal({
             </button>
             <button
               type="submit"
-              className="journal-button-primary"
+              className="rpg-game-button"
               disabled={submitting}
             >
-              {submitting ? "Сохраняем..." : "Сохранить"}
+              {submitting ? "Сохраняем..." : "⚔ Сохранить"}
             </button>
           </div>
         </form>

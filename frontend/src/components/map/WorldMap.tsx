@@ -36,6 +36,8 @@ interface WorldMapProps {
   focusQuestId?: number | null;
   onFocusConsumed?: () => void;
   onNavigateToQuest: (quest: Quest) => void;
+  compact?: boolean;
+  title?: string;
 }
 
 function hasMapCoordinates(quest: Quest): quest is Quest & {
@@ -102,6 +104,8 @@ export function WorldMap({
   focusQuestId = null,
   onFocusConsumed,
   onNavigateToQuest,
+  compact = false,
+  title = "Карта мира",
 }: WorldMapProps) {
   const markerRefs = useRef<Record<number, L.Marker | null>>({});
   const [userCenter, setUserCenter] = useState<[number, number] | null>(null);
@@ -170,12 +174,14 @@ export function WorldMap({
   return (
     <div className="world-map-panel journal-panel overflow-hidden">
       <header className="border-b border-ink/10 px-4 py-4 md:px-6">
-        <h2 className="font-display text-2xl text-ink">Карта мира</h2>
-        <p className="mt-1 text-sm text-ink-muted">
-          {userCenter
-            ? "Карта центрирована на вашей геолокации."
-            : "Активные квесты с координатами отмечены на карте OpenStreetMap."}
-        </p>
+        <h2 className="font-display text-2xl text-ink">{title}</h2>
+        {!compact && (
+          <p className="mt-1 text-sm text-ink-muted">
+            {userCenter
+              ? "Карта центрирована на вашей геолокации."
+              : "Активные квесты с координатами отмечены на карте OpenStreetMap."}
+          </p>
+        )}
       </header>
 
       <div className="world-map-container">

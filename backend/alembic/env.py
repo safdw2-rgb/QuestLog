@@ -9,15 +9,19 @@ from app.config import settings
 from app.db.base import Base
 from app.models import (  # noqa: F401 — регистрация моделей в metadata
     Achievement,
+    ActiveEffect,
     Adventurer,
     AdventurerAchievement,
+    AdventurerFactionReputation,
     Faction,
     JournalEntry,
     Location,
+    MentorStudent,
     Quest,
     QuestNotificationSent,
     QuestStep,
     Reward,
+    User,
 )
 
 config = context.config

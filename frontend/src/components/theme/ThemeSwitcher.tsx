@@ -29,14 +29,20 @@ export function ThemeSwitcher() {
     <div className="relative" ref={rootRef}>
       <button
         type="button"
-        className="theme-switcher-button"
+        className="rpg-quest-icon-slot"
+        style={{ cursor: 'pointer', border: 'none', padding: 0 }}
         onClick={() => setOpen((prev) => !prev)}
         aria-expanded={open}
         aria-haspopup="listbox"
         title="Сменить тему"
       >
-        <span aria-hidden>🎭</span>
-        <span className="hidden sm:inline">Скин</span>
+        <img
+          src="/rpg-ui/System/Icon_setting.png"
+          alt="Тема"
+          width={22}
+          height={22}
+          style={{ imageRendering: 'pixelated', display: 'block' }}
+        />
       </button>
 
       {open && (

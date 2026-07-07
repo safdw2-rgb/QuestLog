@@ -1,16 +1,18 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-import { MapTabIcon } from "@/components/icons/MapTabIcon";
 import { HeroPanel } from "@/components/adventurer/HeroPanel";
+import { useDashboardView } from "@/components/layout/DashboardViewContext";
+import { FlexibleRpgLayout } from "@/components/layout/FlexibleRpgLayout";
 import { RewardShop } from "@/components/rewards/RewardShop";
 import {
   bargainQuestReward,
   createSubquest,
-  getAdventurer,
   getFactions,
+  getMe,
+  getMentorStudents,
   getQuests,
   retireDailyQuest,
   updateQuestSchedule,
@@ -19,8 +21,10 @@ import {
 } from "@/lib/api";
 import type { DateFilter } from "@/lib/quest-date-filters";
 import { getSubquests } from "@/lib/quest-utils";
-import type { Adventurer, Faction, Quest } from "@/lib/types";
+import type { Adventurer, Faction, MentorStudent, Quest } from "@/lib/types";
 import { QuestJournal } from "@/components/quest/QuestJournal";
+import { useEditMode } from "@/components/layout/EditModeContext";
+import { useAuth } from "@/components/auth/AuthContext";
 
 const WorldMap = dynamic(
   () =>
@@ -28,48 +32,72 @@ const WorldMap = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="journal-panel p-10 text-center text-ink-muted">
-        Загружаем карту мира...
-      </div>
+      <div className="p-6 text-center text-[#4a3224]">Загружаем карту мира...</div>
     ),
   },
 );
-
-type DashboardView = "journal" | "shop" | "map";
-
 interface QuestDashboardProps {
   initialAdventurer: Adventurer;
   initialQuests: Quest[];
   initialFactions: Faction[];
-  adventurerId?: number;
+  onEffectsRefresh?: () => void;
 }
 
 export function QuestDashboard({
   initialAdventurer,
   initialQuests,
   initialFactions,
-  adventurerId = 1,
+  onEffectsRefresh,
 }: QuestDashboardProps) {
+  const { setAdventurer: setAuthAdventurer } = useAuth();
   const [adventurer, setAdventurer] = useState(initialAdventurer);
   const [quests, setQuests] = useState(initialQuests);
   const [factions, setFactions] = useState(initialFactions);
-  const [view, setView] = useState<DashboardView>("journal");
+  const [mentorStudents, setMentorStudents] = useState<MentorStudent[]>([]);
+  const { view, setView } = useDashboardView();
   const [updatingQuestId, setUpdatingQuestId] = useState<number | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [focusQuestId, setFocusQuestId] = useState<number | null>(null);
   const [mapFocusQuestId, setMapFocusQuestId] = useState<number | null>(null);
   const [dateFilter, setDateFilter] = useState<DateFilter | null>(null);
-  const [editMode, setEditMode] = useState(false);
+  const { editMode, setEditMode } = useEditMode();
+
+  const handleAdventurerUpdate = useCallback(
+    (updated: Adventurer) => {
+      setAdventurer(updated);
+      setAuthAdventurer(updated);
+    },
+    [setAuthAdventurer],
+  );
 
   const refreshAdventurer = useCallback(async () => {
-    const updated = await getAdventurer(adventurerId);
-    setAdventurer(updated);
-  }, [adventurerId]);
+    const updated = await getMe();
+    handleAdventurerUpdate(updated);
+  }, [handleAdventurerUpdate]);
 
   const refreshQuests = useCallback(async () => {
-    const updated = await getQuests({ adventurer_id: adventurerId });
-    setQuests(updated);
-  }, [adventurerId]);
+    const page = await getQuests({
+      fetch_all: true,
+    });
+    setQuests(page.items);
+  }, []);
+
+  const handleMentorStudentsChange = useCallback((students: MentorStudent[]) => {
+    setMentorStudents(students);
+  }, []);
+
+  const refreshMentorStudents = useCallback(async () => {
+    try {
+      const response = await getMentorStudents();
+      setMentorStudents(response.items);
+    } catch {
+      setMentorStudents([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshMentorStudents();
+  }, [refreshMentorStudents]);
 
   const refreshFactions = useCallback(async () => {
     const updated = await getFactions();
@@ -108,7 +136,7 @@ export function QuestDashboard({
     setActionError(null);
     setUpdatingQuestId(parentQuestId);
     try {
-      const created = await createSubquest(parentQuestId, title, adventurerId);
+      const created = await createSubquest(parentQuestId, title);
       setQuests((prev) => [...prev, created]);
     } catch (e) {
       const message =
@@ -163,7 +191,7 @@ export function QuestDashboard({
       setQuests((prev) =>
         prev.map((quest) => (quest.id === questId ? result.quest : quest)),
       );
-      setAdventurer(result.adventurer);
+      handleAdventurerUpdate(result.adventurer);
     } catch (e) {
       const message =
         e instanceof Error ? e.message : "Не удалось обновить время";
@@ -182,7 +210,7 @@ export function QuestDashboard({
       setQuests((prev) =>
         prev.map((quest) => (quest.id === questId ? result.quest : quest)),
       );
-      setAdventurer(result.adventurer);
+      handleAdventurerUpdate(result.adventurer);
       return `${result.message} (бросок d20: ${result.roll})`;
     } catch (e) {
       const message =
@@ -244,113 +272,98 @@ export function QuestDashboard({
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(260px,300px)_1fr] lg:gap-8">
-      <div className="flex flex-col gap-4">
-        <nav
-          className="dashboard-view-switch journal-panel flex gap-1 p-1"
-          aria-label="Разделы дневника"
-        >
-          <button
-            type="button"
-            className={`dashboard-view-button flex-1 ${
-              view === "journal" ? "dashboard-view-button-active" : ""
-            }`}
-            onClick={() => setView("journal")}
-          >
-            <span className="dashboard-view-icon" aria-hidden>
-              📜
-            </span>
-            <span>Журнал</span>
-          </button>
-          <button
-            type="button"
-            className={`dashboard-view-button flex-1 ${
-              view === "shop" ? "dashboard-view-button-active" : ""
-            }`}
-            onClick={() => setView("shop")}
-          >
-            <span className="dashboard-view-icon" aria-hidden>
-              🏪
-            </span>
-            <span>Магазин</span>
-          </button>
-          <button
-            type="button"
-            className={`dashboard-view-button flex-1 ${
-              view === "map" ? "dashboard-view-button-active" : ""
-            }`}
-            onClick={() => setView("map")}
-          >
-            <MapTabIcon className="h-5 w-5" />
-            <span>Карта</span>
-          </button>
-        </nav>
-
+    <FlexibleRpgLayout
+      left={
         <HeroPanel
           adventurer={adventurer}
           factions={factions}
           editMode={editMode}
-          adventurerId={adventurerId}
-          onAdventurerUpdate={setAdventurer}
+          onAdventurerUpdate={handleAdventurerUpdate}
           onFactionsChange={refreshFactions}
+          onMentorStudentsChange={handleMentorStudentsChange}
         />
-      </div>
+      }
+      rightTabs={
+        <>
+          <button
+            type="button"
+            className={`rpg-game-tab ${view === "journal" ? "rpg-game-tab-active" : ""}`}
+            onClick={() => setView("journal")}
+            aria-pressed={view === "journal"}
+          >
+            📖 Журнал
+          </button>
+          <button
+            type="button"
+            className={`rpg-game-tab ${view === "shop" ? "rpg-game-tab-active" : ""}`}
+            onClick={() => setView("shop")}
+            aria-pressed={view === "shop"}
+          >
+            🏪 Магазин
+          </button>
+        </>
+      }
+      right={
+        <section className="flex w-full min-w-0 flex-1 flex-col gap-4 box-border min-h-0">
+          {actionError && view === "journal" && (
+            <p className="shrink-0 rounded-lg border border-rose-300/50 bg-rose-50/80 px-3 py-2 text-sm text-rose-900">
+              {actionError}
+            </p>
+          )}
 
-      <section>
-        {actionError && view === "journal" && (
-          <p className="mb-3 rounded-lg border border-rose-300/50 bg-rose-50/80 px-3 py-2 text-sm text-rose-900">
-            {actionError}
-          </p>
-        )}
-
-        {view === "journal" ? (
-          <QuestJournal
-            quests={quests}
-            factions={factions}
-            adventurerId={adventurerId}
-            updatingQuestId={updatingQuestId}
-            dateFilter={dateFilter}
-            onDateFilterChange={setDateFilter}
-            editMode={editMode}
-            onEditModeChange={setEditMode}
-            onRefreshQuests={async () => {
-              await Promise.all([refreshQuests(), refreshFactions()]);
-            }}
-            onComplete={handleComplete}
-            onFail={handleFail}
-            onAddSubquest={handleAddSubquest}
-            onToggleSubquest={handleToggleSubquest}
-            onUpdateSchedule={handleUpdateSchedule}
-            onBargain={handleBargain}
-            onRetireDaily={handleRetireDaily}
-            onShowOnMap={handleShowQuestOnMap}
-            onAdventurerUpdate={setAdventurer}
-            onQuestUpdated={(updated) => {
-              setQuests((prev) =>
-                prev.map((quest) =>
-                  quest.id === updated.id ? updated : quest,
-                ),
-              );
-            }}
-            adventurerGold={adventurer.gold}
-            focusQuestId={focusQuestId}
-            onFocusConsumed={() => setFocusQuestId(null)}
-          />
-        ) : view === "shop" ? (
-          <RewardShop
-            adventurer={adventurer}
-            adventurerId={adventurerId}
-            onAdventurerUpdate={setAdventurer}
-          />
-        ) : (
-          <WorldMap
-            quests={quests}
-            focusQuestId={mapFocusQuestId}
-            onFocusConsumed={() => setMapFocusQuestId(null)}
-            onNavigateToQuest={handleNavigateToQuest}
-          />
-        )}
-      </section>
-    </div>
+          {view === "journal" ? (
+            <QuestJournal
+              quests={quests}
+              factions={factions}
+              updatingQuestId={updatingQuestId}
+              dateFilter={dateFilter}
+              onDateFilterChange={setDateFilter}
+              editMode={editMode}
+              onEditModeChange={setEditMode}
+              onRefreshQuests={async () => {
+                await Promise.all([refreshQuests(), refreshFactions()]);
+              }}
+              onComplete={handleComplete}
+              onFail={handleFail}
+              onAddSubquest={handleAddSubquest}
+              onToggleSubquest={handleToggleSubquest}
+              onUpdateSchedule={handleUpdateSchedule}
+              onBargain={handleBargain}
+              onRetireDaily={handleRetireDaily}
+              onShowOnMap={handleShowQuestOnMap}
+              onAdventurerUpdate={handleAdventurerUpdate}
+              onQuestUpdated={(updated) => {
+                setQuests((prev) =>
+                  prev.map((quest) =>
+                    quest.id === updated.id ? updated : quest,
+                  ),
+                );
+              }}
+              adventurerGold={adventurer.gold}
+              currentUserId={adventurer.user_id}
+              mentorStudents={mentorStudents}
+              focusQuestId={focusQuestId}
+              onFocusConsumed={() => setFocusQuestId(null)}
+            />
+          ) : view === "shop" ? (
+            <RewardShop
+              adventurer={adventurer}
+              factions={factions}
+              editMode={editMode}
+              onAdventurerUpdate={handleAdventurerUpdate}
+              onEffectsRefresh={onEffectsRefresh}
+            />
+          ) : (
+            <WorldMap
+              quests={quests}
+              focusQuestId={mapFocusQuestId}
+              onFocusConsumed={() => setMapFocusQuestId(null)}
+              onNavigateToQuest={handleNavigateToQuest}
+            />
+          )}
+        </section>
+      }
+    />
   );
 }
+

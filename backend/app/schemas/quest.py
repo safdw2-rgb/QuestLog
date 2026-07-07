@@ -3,7 +3,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
 
-from app.models.enums import QuestDifficulty, QuestStatus, QuestType
+from app.models.enums import QuestDifficulty, QuestFrequency, QuestStatus, QuestType
 from app.schemas.adventurer import AdventurerRead
 
 
@@ -41,7 +41,6 @@ OptionalCoordinate = Annotated[float | None, BeforeValidator(validate_optional_f
 
 
 class QuestCreate(BaseModel):
-    adventurer_id: int
     title: str = Field(max_length=200)
     description: str | None = Field(default=None)
     quest_type: QuestType = QuestType.SIDE
@@ -55,6 +54,11 @@ class QuestCreate(BaseModel):
     faction_id: OptionalForeignKey = None
     location_id: OptionalForeignKey = None
     parent_quest_id: OptionalForeignKey = None
+    assigned_to_id: OptionalForeignKey = Field(
+        default=None,
+        description="Adventurer id ученика; только для наставника",
+    )
+    frequency: QuestFrequency = QuestFrequency.DAILY
 
 
 class QuestStatusUpdate(BaseModel):
@@ -75,12 +79,14 @@ class QuestUpdate(BaseModel):
     reminder_time: OptionalReminderTime = None
     latitude: OptionalCoordinate = None
     longitude: OptionalCoordinate = None
+    frequency: QuestFrequency | None = None
 
 
 class QuestAiGenerateRequest(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     latitude: OptionalCoordinate = None
     longitude: OptionalCoordinate = None
+    faction_id: OptionalForeignKey = None
 
 
 class QuestAiGenerateResponse(BaseModel):
@@ -92,11 +98,24 @@ class QuestAiGenerateResponse(BaseModel):
     source: str = Field(description="gemini или fallback")
 
 
+class QuestAiImproveRequest(BaseModel):
+    title: str = Field(min_length=1, max_length=200)
+    description: str | None = None
+    faction_id: OptionalForeignKey = None
+
+
+class QuestAiImproveResponse(BaseModel):
+    title: str
+    description: str
+    source: str = Field(description="gemini или fallback")
+
+
 class QuestRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
     adventurer_id: int
+    creator_user_id: int | None
     faction_id: int | None
     location_id: int | None
     parent_quest_id: int | None
@@ -105,6 +124,7 @@ class QuestRead(BaseModel):
     quest_type: QuestType
     status: QuestStatus
     difficulty: QuestDifficulty
+    frequency: QuestFrequency
     xp_reward: int
     gold_reward: int
     xp_earned: int
@@ -142,3 +162,10 @@ class QuestBargainResponse(BaseModel):
     outcome: str = Field(description="fail, success или critical")
     message: str
     gold_spent: int = Field(default=10, ge=0)
+
+
+class QuestPageResponse(BaseModel):
+    items: list[QuestRead]
+    total: int
+    page: int
+    size: int

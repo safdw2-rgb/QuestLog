@@ -56,3 +56,10 @@ def format_quest_failed(quest_title: str) -> str:
         "Вы теряете очки опыта и золото, а контракт отправляется "
         "на кладбище невыполненных задач!"
     )
+
+
+def format_effect_expired(effect_name: str) -> str:
+    return (
+        f"⏰ Бафф «{effect_name}» истёк. Время удовольствия закончилось — "
+        "возвращайся к квестам, герой!"
+    )

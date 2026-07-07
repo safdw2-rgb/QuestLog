@@ -8,7 +8,7 @@
         "type": "tabs",
         "children": [
           {
-            "id": "daf74e5db434a735",
+            "id": "322822f46d0660c3",
             "type": "leaf",
             "state": {
               "type": "markdown",
@@ -20,8 +20,19 @@
               "icon": "lucide-file",
               "title": "Achievement"
             }
+          },
+          {
+            "id": "daf74e5db434a735",
+            "type": "leaf",
+            "state": {
+              "type": "graph",
+              "state": {},
+              "icon": "lucide-git-fork",
+              "title": "Граф"
+            }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -182,10 +193,12 @@
   },
   "active": "daf74e5db434a735",
   "lastOpenFiles": [
-    "Quests/quest-1.md",
-    "Hero_Lore/Ldvir_History.md",
-    "QuestStep.md",
+    "Achievement.md",
+    "ER-диаграмма.md",
     "QuestLog.md",
+    "Hero_Lore/Ldvir_History.md",
+    "Quests/quest-1.md",
+    "QuestStep.md",
     "Quest.md",
     "Quests/quest-15.md",
     "Quests/quest-19.md",
@@ -205,9 +218,7 @@
     "Quests/quest-33.md",
     "Quests/quest-27.md",
     "Quests/quest-24.md",
-    "Achievement.md",
     "Quests/quest-29.md",
-    "Quests/quest-28.md",
     "Quests"
   ]
 }

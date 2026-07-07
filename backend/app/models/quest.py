@@ -14,7 +14,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
-from app.models.enums import QuestDifficulty, QuestStatus, QuestType, pg_enum
+from app.models.enums import QuestDifficulty, QuestFrequency, QuestStatus, QuestType, pg_enum
 
 if TYPE_CHECKING:
     from app.models.adventurer import Adventurer
@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from app.models.journal import JournalEntry
     from app.models.location import Location
     from app.models.quest_step import QuestStep
+    from app.models.user import User
 
 
 class Quest(Base):
@@ -38,6 +39,11 @@ class Quest(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
 
     adventurer_id: Mapped[int] = mapped_column(ForeignKey("adventurers.id"), index=True)
+    creator_user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     faction_id: Mapped[int | None] = mapped_column(
         ForeignKey("factions.id"), nullable=True, index=True
     )
@@ -67,6 +73,11 @@ class Quest(Base):
         pg_enum(QuestDifficulty),
         default=QuestDifficulty.NORMAL,
         server_default=QuestDifficulty.NORMAL.value,
+    )
+    frequency: Mapped[QuestFrequency] = mapped_column(
+        pg_enum(QuestFrequency),
+        default=QuestFrequency.DAILY,
+        server_default=QuestFrequency.DAILY.value,
     )
 
     xp_reward: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
@@ -105,6 +116,7 @@ class Quest(Base):
     )
 
     adventurer: Mapped["Adventurer"] = relationship(back_populates="quests")
+    creator: Mapped["User | None"] = relationship(foreign_keys=[creator_user_id])
     faction: Mapped["Faction | None"] = relationship(back_populates="quests")
     location: Mapped["Location | None"] = relationship(back_populates="quests")
 

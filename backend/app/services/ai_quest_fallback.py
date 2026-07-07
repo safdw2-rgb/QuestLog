@@ -3,14 +3,15 @@ import re
 from dataclasses import dataclass
 
 from app.models.enums import QuestDifficulty, QuestType
+from app.services.gold_economy import gold_for_difficulty
 
-# Диапазоны наград: (xp_min, xp_max, gold_min, gold_max)
-REWARD_RANGES: dict[QuestDifficulty, tuple[int, int, int, int]] = {
-    QuestDifficulty.TRIVIAL: (10, 25, 5, 12),
-    QuestDifficulty.EASY: (15, 35, 8, 18),
-    QuestDifficulty.NORMAL: (25, 50, 10, 25),
-    QuestDifficulty.HARD: (45, 80, 18, 40),
-    QuestDifficulty.LEGENDARY: (80, 150, 30, 60),
+# Диапазоны XP (gold фиксирован таблицей gold_economy)
+REWARD_RANGES: dict[QuestDifficulty, tuple[int, int]] = {
+    QuestDifficulty.TRIVIAL: (10, 25),
+    QuestDifficulty.EASY: (15, 35),
+    QuestDifficulty.NORMAL: (25, 50),
+    QuestDifficulty.HARD: (45, 80),
+    QuestDifficulty.LEGENDARY: (80, 150),
 }
 
 
@@ -174,9 +175,9 @@ def _roll_rewards(
     difficulty: QuestDifficulty,
     quest_type: QuestType,
 ) -> tuple[int, int]:
-    xp_lo, xp_hi, gold_lo, gold_hi = REWARD_RANGES[difficulty]
+    xp_lo, xp_hi = REWARD_RANGES[difficulty]
     xp = random.randint(xp_lo, xp_hi)
-    gold = random.randint(gold_lo, gold_hi)
+    gold = gold_for_difficulty(difficulty)
     if quest_type == QuestType.MAIN:
         xp = int(xp * random.uniform(1.1, 1.35))
         gold = int(gold * random.uniform(1.1, 1.35))

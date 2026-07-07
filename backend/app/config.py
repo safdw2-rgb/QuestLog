@@ -10,13 +10,21 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=_BACKEND_DIR / ".env",
         env_file_encoding="utf-8",
+        extra="ignore",
     )
+
+    secret_key: str = "change-me-in-production"
+    jwt_algorithm: str = "HS256"
+    access_token_expire_minutes: int = 60 * 24 * 7
+    password_reset_expire_minutes: int = 60
+    frontend_base_url: str = "http://localhost:3000"
 
     database_url: str = "postgresql+asyncpg://questlog:questlog@localhost:5432/questlog"
     app_title: str = "QuestLog API"
     app_version: str = "0.1.0"
 
     gemini_api_key: str | None = None
+    gemini_model: str = "gemini-2.5-flash"
     ai_quest_allow_fallback: bool = True
 
     obsidian_vault_path: str | None = None

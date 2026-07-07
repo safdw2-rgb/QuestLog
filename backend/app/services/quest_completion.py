@@ -10,6 +10,7 @@ from app.models.adventurer import Adventurer
 from app.models.enums import JournalEntryType, QuestStatus
 from app.models.journal import JournalEntry
 from app.models.quest import Quest
+from app.services.gold_economy import gold_for_difficulty
 from app.services.leveling import level_from_total_xp
 
 
@@ -25,7 +26,11 @@ class QuestCompletionService:
 
         now = datetime.now(UTC)
         xp_earned = quest.xp_reward
-        gold_earned = quest.gold_reward
+        if quest.bargained:
+            gold_earned = quest.gold_reward
+        else:
+            gold_earned = gold_for_difficulty(quest.difficulty)
+            quest.gold_reward = gold_earned
 
         quest.status = QuestStatus.COMPLETED
         quest.completed_at = now
@@ -57,6 +62,7 @@ class QuestCompletionService:
             await adjust_faction_reputation(
                 db,
                 quest.faction_id,
+                adventurer.id,
                 REPUTATION_GAIN_ON_COMPLETE,
             )
 

@@ -40,6 +40,15 @@ class QuestDifficulty(str, enum.Enum):
     LEGENDARY = "legendary"
 
 
+class QuestFrequency(str, enum.Enum):
+    """Периодичность повторения для ежедневных квестов."""
+
+    DAILY = "daily"
+    EVERY_OTHER_DAY = "every_other_day"
+    THREE_DAYS = "three_days"
+    WEEKLY = "weekly"
+
+
 class StepStatus(str, enum.Enum):
     PENDING = "pending"
     COMPLETED = "completed"

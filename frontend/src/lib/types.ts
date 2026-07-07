@@ -20,6 +20,12 @@ export type QuestDifficulty =
   | "hard"
   | "legendary";
 
+export type QuestFrequency =
+  | "daily"
+  | "every_other_day"
+  | "three_days"
+  | "weekly";
+
 export interface Faction {
   id: number;
   name: string;
@@ -32,6 +38,8 @@ export interface Faction {
 
 export interface Adventurer {
   id: number;
+  user_id: number;
+  invite_code: string;
   username: string;
   display_name: string;
   experience_points: number;
@@ -53,14 +61,39 @@ export interface Reward {
   id: number;
   title: string;
   cost: number;
+  effective_cost?: number | null;
   description: string | null;
   icon: string;
+  faction_id: number | null;
+}
+
+export interface ActiveEffect {
+  id: number;
+  name: string;
+  description: string | null;
+  icon: string;
+  effect_type: string;
+  expires_at: string;
+  created_at: string;
+}
+
+export interface ActiveEffectList {
+  items: ActiveEffect[];
 }
 
 export interface RewardPurchaseResult {
   reward: Reward;
   adventurer: Adventurer;
   message: string;
+  gold_spent?: number;
+  active_effect?: ActiveEffect | null;
+}
+
+export interface QuestPage {
+  items: Quest[];
+  total: number;
+  page: number;
+  size: number;
 }
 
 export interface QuestDeadlineUpdateResult {
@@ -81,9 +114,18 @@ export interface QuestBargainResult {
 export const DEADLINE_RESCHEDULE_COST = 20;
 export const BARGAIN_COST = 10;
 
+export interface MentorStudent {
+  user_id: number;
+  adventurer_id: number;
+  display_name: string;
+  username: string;
+  invite_code: string;
+}
+
 export interface Quest {
   id: number;
   adventurer_id: number;
+  creator_user_id: number | null;
   faction_id: number | null;
   location_id: number | null;
   parent_quest_id: number | null;
@@ -92,6 +134,7 @@ export interface Quest {
   quest_type: QuestType;
   status: QuestStatus;
   difficulty: QuestDifficulty;
+  frequency: QuestFrequency;
   xp_reward: number;
   gold_reward: number;
   xp_earned: number;

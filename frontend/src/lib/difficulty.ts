@@ -6,6 +6,11 @@ export interface DifficultyLevel {
   label: string;
   shortLabel: string;
   tier: "errand" | "adventure" | "trial" | "legendary";
+  /** Подсказка об условиях сложности, показывается под селектором. */
+  hint: string;
+  /** Базовая награда за квест такой сложности (до ручной корректировки). */
+  baseXp: number;
+  baseGold: number;
 }
 
 export const DIFFICULTY_LEVELS: DifficultyLevel[] = [
@@ -15,6 +20,9 @@ export const DIFFICULTY_LEVELS: DifficultyLevel[] = [
     label: "Поручение",
     shortLabel: "Поручение",
     tier: "errand",
+    hint: "Простая задача, мелкое дело или рутина до 15–30 минут.",
+    baseXp: 10,
+    baseGold: 2,
   },
   {
     value: "normal",
@@ -22,6 +30,9 @@ export const DIFFICULTY_LEVELS: DifficultyLevel[] = [
     label: "Приключение",
     shortLabel: "Приключение",
     tier: "adventure",
+    hint: "Обычное дело, требующее сосредоточенности до 1–2 часов.",
+    baseXp: 50,
+    baseGold: 10,
   },
   {
     value: "hard",
@@ -29,6 +40,9 @@ export const DIFFICULTY_LEVELS: DifficultyLevel[] = [
     label: "Испытание",
     shortLabel: "Испытание",
     tier: "trial",
+    hint: "Сложный вызов, требующий серьезных усилий или нескольких дней работы.",
+    baseXp: 150,
+    baseGold: 30,
   },
   {
     value: "legendary",
@@ -36,6 +50,9 @@ export const DIFFICULTY_LEVELS: DifficultyLevel[] = [
     label: "Легендарный квест",
     shortLabel: "Легенда",
     tier: "legendary",
+    hint: "Эпический проект или ключевая жизненная веха, требующая огромных ресурсов.",
+    baseXp: 500,
+    baseGold: 100,
   },
 ];
 

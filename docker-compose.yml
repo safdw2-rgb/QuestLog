@@ -50,7 +50,18 @@ services:
     environment:
       BACKEND_URL: http://backend:8000
       API_URL: http://backend:8000
+    volumes:
+      - ./frontend/public:/app/public
     restart: unless-stopped
+
+  tunnel:
+      image: cloudflare/cloudflared:latest
+      container_name: questlog-tunnel
+      restart: unless-stopped
+      command: tunnel --no-autoupdate run --token eyJhIjoiNjFjMzhkYWU3NjQxOTQyN2UwY2U0MDIyZGViODM2MTAiLCJ0IjoiZjhjMzRjMTAtNGZiNS00M2YzLThlNjUtOWExNzgzM2I0YWYyIiwicyI6Ik9HSTNZelU0WWpFdE5EbGhOQzAwTldJNExXSmhNREl0TlRFeE1EUm1OalkyT0RReSJ9
+      depends_on:
+        - frontend
+        - backend
 
 volumes:
   questlog_pgdata:

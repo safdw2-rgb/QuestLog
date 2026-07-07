@@ -1,15 +1,17 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, Integer, String, Text, func
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 
 if TYPE_CHECKING:
     from app.models.achievement import AdventurerAchievement
+    from app.models.adventurer_faction_reputation import AdventurerFactionReputation
     from app.models.journal import JournalEntry
     from app.models.quest import Quest
+    from app.models.user import User
 
 
 class Adventurer(Base):
@@ -21,6 +23,11 @@ class Adventurer(Base):
     __tablename__ = "adventurers"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id"),
+        unique=True,
+        index=True,
+    )
     username: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     display_name: Mapped[str] = mapped_column(String(128))
 
@@ -36,10 +43,14 @@ class Adventurer(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
+    user: Mapped["User"] = relationship(back_populates="adventurer")
     quests: Mapped[list["Quest"]] = relationship(back_populates="adventurer")
     achievements: Mapped[list["AdventurerAchievement"]] = relationship(
         back_populates="adventurer"
     )
     journal_entries: Mapped[list["JournalEntry"]] = relationship(
         back_populates="adventurer"
+    )
+    faction_reputations: Mapped[list["AdventurerFactionReputation"]] = relationship(
+        back_populates="adventurer",
     )

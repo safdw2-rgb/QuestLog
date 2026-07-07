@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 
 import { createFaction, updateFaction } from "@/lib/api";
+import { JournalSectionTitle } from "@/components/layout/JournalSectionTitle";
 import { getReputationLevel } from "@/lib/faction-reputation";
 import { resolveFactionIcon, resolveFactionIconFromForm } from "@/lib/faction-utils";
 import type { Faction } from "@/lib/types";
@@ -11,6 +12,7 @@ interface FactionManagerProps {
   factions: Faction[];
   editMode: boolean;
   onFactionsChange: () => Promise<void>;
+  title?: string;
 }
 
 interface FactionFormState {
@@ -24,6 +26,7 @@ export function FactionManager({
   factions,
   editMode,
   onFactionsChange,
+  title = "Репутация на этой неделе",
 }: FactionManagerProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingFaction, setEditingFaction] = useState<Faction | null>(null);
@@ -85,10 +88,10 @@ export function FactionManager({
   return (
     <>
       <section>
-        <div className="flex items-center justify-between gap-2">
-          <h3 className="text-xs uppercase tracking-wide text-ink-muted">
-            Репутация фракций
-          </h3>
+        <div className="flex min-w-0 flex-1 items-start justify-between gap-2">
+          <JournalSectionTitle as="h3" className="min-w-0 flex-1">
+            {title}
+          </JournalSectionTitle>
           {editMode && (
             <button
               type="button"
@@ -103,39 +106,61 @@ export function FactionManager({
         </div>
 
         {factions.length === 0 ? (
-          <p className="mt-2 text-sm text-ink-muted">
+          <p className="mt-1.5 text-xs text-[#4a3224]">
             Фракций пока нет.
             {editMode ? " Нажмите +, чтобы создать." : ""}
           </p>
         ) : (
-          <ul className="mt-2 space-y-2">
+          <ul className="mt-1.5 space-y-1.5">
             {factions.map((faction) => {
               const icon = resolveFactionIcon(faction);
+              const REP_MAX = 50;
+              const repPct = Math.max(
+                0,
+                Math.min(100, (faction.reputation_points / REP_MAX) * 100),
+              );
+
               return (
                 <li
                   key={faction.id}
-                  className="flex items-center justify-between rounded-lg border border-ink/10 bg-parchment-dark/30 px-3 py-2 text-sm"
+                  className="faction-row px-0 py-0.5 text-xs"
                 >
-                  <span className="min-w-0 truncate">
-                    {icon ? `${icon} ` : ""}
-                    {faction.name}
-                  </span>
-                  <div className="flex shrink-0 items-center gap-1.5">
-                    {editMode && (
-                      <button
-                        type="button"
-                        className="faction-edit-button"
-                        onClick={() => openEditModal(faction)}
-                        aria-label={`Редактировать ${faction.name}`}
-                        title="Редактировать"
-                      >
-                        ✏️
-                      </button>
-                    )}
-                    <span className="text-xs text-ink-muted">
-                      {getReputationLevel(faction.reputation_points)} ·{" "}
-                      {faction.reputation_points}
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="min-w-0 truncate">
+                      {icon ? `${icon} ` : ""}
+                      {faction.name}
                     </span>
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      {editMode && (
+                        <button
+                          type="button"
+                          className="faction-edit-button"
+                          onClick={() => openEditModal(faction)}
+                          aria-label={`Редактировать ${faction.name}`}
+                          title="Редактировать"
+                        >
+                          ✏️
+                        </button>
+                      )}
+                      <span className="text-[10px] text-[#4a3224]/80">
+                        {getReputationLevel(faction.reputation_points)}
+                      </span>
+                    </div>
+                  </div>
+                  <div
+                    className="rpg-faction-bar-bg mt-0.5"
+                    role="progressbar"
+                    aria-valuenow={Math.round(repPct)}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-label={`Репутация ${faction.name}: ${faction.reputation_points} очков`}
+                  >
+                    <div
+                      className="rpg-faction-bar-fill"
+                      style={{
+                        clipPath: `inset(0 ${100 - repPct}% 0 0)`,
+                      }}
+                    />
                   </div>
                 </li>
               );

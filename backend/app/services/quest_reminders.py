@@ -125,6 +125,7 @@ async def _fail_quest_at_deadline(db: AsyncSession, quest: Quest) -> None:
         await adjust_faction_reputation(
             db,
             quest.faction_id,
+            quest.adventurer_id,
             -REPUTATION_LOSS_ON_FAIL,
         )
     logger.info("Quest %s auto-failed at deadline", quest.id)

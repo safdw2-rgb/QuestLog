@@ -1,11 +1,12 @@
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Integer, String, Text
+from sqlalchemy import String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 
 if TYPE_CHECKING:
+    from app.models.adventurer_faction_reputation import AdventurerFactionReputation
     from app.models.quest import Quest
 
 
@@ -23,8 +24,8 @@ class Faction(Base):
     icon: Mapped[str | None] = mapped_column(String(32), nullable=True)
     color: Mapped[str | None] = mapped_column(String(7), nullable=True)  # #RRGGBB
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    reputation_points: Mapped[int] = mapped_column(
-        Integer, default=0, server_default="0"
-    )
 
     quests: Mapped[list["Quest"]] = relationship(back_populates="faction")
+    adventurer_reputations: Mapped[list["AdventurerFactionReputation"]] = relationship(
+        back_populates="faction",
+    )

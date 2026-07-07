@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 import type { QuestScheduleUpdatePayload } from "@/lib/api";
 import {
@@ -8,7 +8,7 @@ import {
   filterQuestsByDateFilter,
   type DateFilter,
 } from "@/lib/quest-date-filters";
-import type { Faction, Quest } from "@/lib/types";
+import type { Faction, MentorStudent, Quest } from "@/lib/types";
 import {
   EMPTY_ALL_TAB_MESSAGE,
   EMPTY_DAILY_TAB_MESSAGE,
@@ -16,16 +16,24 @@ import {
   getTabForQuest,
   type QuestJournalTab,
 } from "@/lib/quest-tabs";
+import { JournalSectionTitle } from "@/components/layout/JournalSectionTitle";
 import { ThemeSwitcher } from "@/components/theme/ThemeSwitcher";
 import { QuestCreateModal } from "@/components/quest/QuestCreateModal";
 import { QuestEditModal } from "@/components/quest/QuestEditModal";
 import { QuestJournalTabs } from "@/components/quest/QuestJournalTabs";
 import { QuestList } from "@/components/quest/QuestList";
+import { QuestPagination } from "@/components/quest/QuestPagination";
+import {
+  paginateQuests,
+  QUEST_PAGE_SIZE,
+  QUEST_SORT_OPTIONS,
+  sortQuests,
+  type QuestSortOption,
+} from "@/lib/quest-sort";
 
 interface QuestJournalProps {
   quests: Quest[];
   factions: Faction[];
-  adventurerId?: number;
   updatingQuestId?: number | null;
   dateFilter: DateFilter | null;
   onDateFilterChange: (filter: DateFilter | null) => void;
@@ -46,8 +54,11 @@ interface QuestJournalProps {
   onRetireDaily?: (questId: number) => Promise<void>;
   onShowOnMap?: (quest: Quest) => void;
   adventurerGold?: number;
+  currentUserId?: number;
+  mentorStudents?: MentorStudent[];
   focusQuestId?: number | null;
   onFocusConsumed?: () => void;
+  title?: string;
 }
 
 export function QuestJournal({
@@ -68,20 +79,40 @@ export function QuestJournal({
   onRetireDaily,
   onShowOnMap,
   adventurerGold = 0,
+  currentUserId,
+  mentorStudents = [],
   focusQuestId = null,
   onFocusConsumed,
   onAdventurerUpdate,
   onQuestUpdated,
+  title = "Журнал заданий",
 }: QuestJournalProps) {
   const [activeTab, setActiveTab] = useState<QuestJournalTab>("all");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingQuest, setEditingQuest] = useState<Quest | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [sortBy, setSortBy] = useState<QuestSortOption>("created_desc");
+  const [page, setPage] = useState(1);
+
+  const factionNames = useMemo(
+    () => new Map(factions.map((faction) => [faction.id, faction.name])),
+    [factions],
+  );
 
   const filteredQuests = useMemo(() => {
     const byTab = filterQuestsByTab(quests, activeTab);
-    return filterQuestsByDateFilter(byTab, dateFilter);
-  }, [quests, activeTab, dateFilter]);
+    const byDate = filterQuestsByDateFilter(byTab, dateFilter);
+    return sortQuests(byDate, sortBy, factionNames);
+  }, [quests, activeTab, dateFilter, sortBy, factionNames]);
+
+  const pagination = useMemo(
+    () => paginateQuests(filteredQuests, page, QUEST_PAGE_SIZE),
+    [filteredQuests, page],
+  );
+
+  useEffect(() => {
+    setPage(1);
+  }, [activeTab, dateFilter, sortBy]);
 
   useEffect(() => {
     if (focusQuestId == null) {
@@ -125,80 +156,129 @@ export function QuestJournal({
   }
 
   return (
-    <>
+    <div className="w-full min-w-0 box-border">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-display text-2xl text-ink">Журнал заданий</h2>
+        <JournalSectionTitle>{title}</JournalSectionTitle>
         <div className="flex items-center gap-2">
           <button
             type="button"
-            className="journal-button-primary"
+            className="rpg-game-button"
             onClick={() => setModalOpen(true)}
           >
             + Добавить квест
           </button>
+          <ThemeSwitcher />
           <button
             type="button"
-            className={`edit-mode-toggle ${editMode ? "edit-mode-toggle-active" : ""}`}
+            className="active:scale-95 transition-transform border-0 bg-transparent p-0 cursor-pointer"
             onClick={() => onEditModeChange(!editMode)}
             aria-pressed={editMode}
-            title="Режим редактирования"
+            title={editMode ? "Выключить режим редактирования" : "Включить режим редактирования"}
           >
-            <span aria-hidden>⚙️</span>
-            <span className="sr-only">Режим редактирования</span>
+            <img
+              src={editMode
+                ? "/rpg-ui/Controls/UI_Toggle2_On.png"
+                : "/rpg-ui/Controls/UI_Toggle2_Off.png"
+              }
+              alt={editMode ? "Редактирование включено" : "Редактирование выключено"}
+              className="h-8 w-auto object-contain"
+              style={{ imageRendering: 'pixelated' }}
+            />
           </button>
-          <ThemeSwitcher />
         </div>
       </div>
 
-      <div className="mb-5 flex flex-wrap items-center gap-2">
+      {/* Scroll hint: fade on right edge shows there are more tabs to swipe */}
+      <div className="relative">
         <QuestJournalTabs
           activeTab={activeTab}
           quests={quests}
           onTabChange={setActiveTab}
         />
+        <div
+          className="pointer-events-none absolute inset-y-0 right-0 w-10 md:hidden"
+          style={{ background: 'linear-gradient(to left, #f0e6c8 0%, transparent 100%)' }}
+          aria-hidden
+        />
+      </div>
+
+      <div className="rpg-filter-nav mb-5 flex flex-row flex-nowrap overflow-x-auto items-center gap-x-5 gap-y-2 pb-1 md:flex-wrap" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
         {(["today", "tomorrow", "future"] as const).map((filter) => (
           <button
             key={filter}
             type="button"
-            className={`journal-today-button ${
-              dateFilter === filter ? "journal-today-button-active" : ""
+            className={`rpg-text-link ${
+              dateFilter === filter ? "rpg-text-link-active" : ""
             }`}
             onClick={() => toggleDateFilter(filter)}
           >
             {DATE_FILTER_LABELS[filter]}
           </button>
         ))}
+
+        <label className="journal-sort-select-wrap ml-auto flex items-center gap-2">
+          <span className="text-[10px] uppercase tracking-wide text-ink-muted">
+            Сортировка
+          </span>
+          <select
+            className="journal-sort-select"
+            value={sortBy}
+            onChange={(event) =>
+              setSortBy(event.target.value as QuestSortOption)
+            }
+            aria-label="Сортировка квестов"
+          >
+            {QUEST_SORT_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
       {refreshing && (
         <p className="mb-3 text-xs text-ink-muted">Обновляем список...</p>
       )}
 
-      <QuestList
-        quests={filteredQuests}
-        allQuests={quests}
-        factions={factions}
-        showActions={showActions}
-        isDailyTab={activeTab === "daily"}
-        emptyMessage={emptyMessage}
-        updatingQuestId={updatingQuestId}
-        onComplete={onComplete}
-        onFail={onFail}
-        onAddSubquest={onAddSubquest}
-        onToggleSubquest={onToggleSubquest}
-        onUpdateSchedule={onUpdateSchedule}
-        onBargain={onBargain}
-        onRetireDaily={onRetireDaily}
-        onShowOnMap={onShowOnMap}
-        onEdit={editMode ? setEditingQuest : undefined}
-        adventurerGold={adventurerGold}
-        focusQuestId={focusQuestId}
-        onFocusConsumed={onFocusConsumed}
-      />
+      <div className="quest-journal-list-scroll rpg-fantasy-vscroll">
+        <QuestList
+          quests={pagination.items}
+          allQuests={quests}
+          factions={factions}
+          showActions={showActions}
+          isDailyTab={activeTab === "daily"}
+          isFailedTab={activeTab === "failed"}
+          emptyMessage={emptyMessage}
+          updatingQuestId={updatingQuestId}
+          onComplete={onComplete}
+          onFail={onFail}
+          onAddSubquest={onAddSubquest}
+          onToggleSubquest={onToggleSubquest}
+          onUpdateSchedule={onUpdateSchedule}
+          onBargain={onBargain}
+          onRetireDaily={onRetireDaily}
+          onShowOnMap={onShowOnMap}
+          onEdit={editMode ? setEditingQuest : undefined}
+          adventurerGold={adventurerGold}
+          currentUserId={currentUserId}
+          focusQuestId={focusQuestId}
+          onFocusConsumed={onFocusConsumed}
+        />
+
+        {filteredQuests.length > QUEST_PAGE_SIZE && (
+          <QuestPagination
+            page={pagination.page}
+            totalPages={pagination.totalPages}
+            onPageChange={setPage}
+          />
+        )}
+      </div>
 
       <QuestCreateModal
         open={modalOpen}
         factions={factions}
+        students={mentorStudents}
         onClose={() => setModalOpen(false)}
         onCreated={handleQuestCreated}
       />
@@ -215,6 +295,6 @@ export function QuestJournal({
           onAdventurerUpdate?.(result.adventurer);
         }}
       />
-    </>
+    </div>
   );
 }

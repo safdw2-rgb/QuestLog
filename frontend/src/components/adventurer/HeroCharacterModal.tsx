@@ -3,17 +3,18 @@
 import { useEffect } from "react";
 
 import { HeroCardContent } from "@/components/adventurer/HeroCardContent";
-import type { Adventurer, Faction } from "@/lib/types";
+import { MentorshipPanel } from "@/components/mentor/MentorshipPanel";
+import type { Adventurer, Faction, MentorStudent } from "@/lib/types";
 
 interface HeroCharacterModalProps {
   open: boolean;
   adventurer: Adventurer;
   factions: Faction[];
   editMode: boolean;
-  adventurerId?: number;
   onClose: () => void;
   onAdventurerUpdate: (adventurer: Adventurer) => void;
   onFactionsChange: () => Promise<void>;
+  onMentorStudentsChange?: (students: MentorStudent[]) => void;
 }
 
 export function HeroCharacterModal({
@@ -21,10 +22,10 @@ export function HeroCharacterModal({
   adventurer,
   factions,
   editMode,
-  adventurerId = 1,
   onClose,
   onAdventurerUpdate,
   onFactionsChange,
+  onMentorStudentsChange,
 }: HeroCharacterModalProps) {
   useEffect(() => {
     if (!open) {
@@ -73,14 +74,17 @@ export function HeroCharacterModal({
           </h2>
         </header>
 
-        <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-5 py-4">
+        <div className="min-h-0 flex-1 space-y-4 overflow-x-hidden overflow-y-auto px-5 py-4">
           <HeroCardContent
             adventurer={adventurer}
             factions={factions}
             editMode={editMode}
-            adventurerId={adventurerId}
             onAdventurerUpdate={onAdventurerUpdate}
             onFactionsChange={onFactionsChange}
+          />
+          <MentorshipPanel
+            inviteCode={adventurer.invite_code}
+            onStudentsChange={onMentorStudentsChange}
           />
         </div>
 

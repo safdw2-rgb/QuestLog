@@ -7,6 +7,8 @@ class AdventurerRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+    user_id: int
+    invite_code: str
     username: str
     display_name: str
     experience_points: int
@@ -23,4 +25,4 @@ class AdventurerRead(BaseModel):
 class AdventurerUpdate(BaseModel):
     display_name: str | None = Field(default=None, max_length=128)
     username: str | None = Field(default=None, max_length=64)
-    lore: str | None = Field(default=None, max_length=1000)
+    lore: str | None = Field(default=None, max_length=2500)

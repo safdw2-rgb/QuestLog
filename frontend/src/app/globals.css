@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: 'Moyenage';
+  src: url('/fonts/Moyenage15SHA.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme {
   --font-display: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
   --font-body: "Segoe UI", system-ui, sans-serif;
@@ -22,6 +30,7 @@
   html,
   body {
     overflow-x: hidden;
+    scroll-behavior: smooth;
   }
 
   body {
@@ -40,6 +49,178 @@
 }
 
 @layer components {
+  /*
+   * Фон библиотеки вынесен в отдельный фиксированный <div> (см. HomePageClient),
+   * а не задаётся здесь через background-attachment: fixed — на Safari это
+   * свойство заставляет браузер репэйнтить тяжёлую текстуру при каждом
+   * скролле страницы, что приводит к микрофризам и просадкам FPS.
+   */
+  .rpg-library-screen .site-header-kicker {
+    color: rgb(244 232 200 / 0.62);
+  }
+
+  .rpg-library-screen .site-header-title {
+    color: #e8c872;
+    text-shadow: 0 2px 16px rgb(0 0 0 / 0.55);
+  }
+
+  .rpg-header-link {
+    @apply inline-flex items-center gap-1.5 border-0 bg-transparent px-2 py-1 text-sm font-medium tracking-wide text-[#e8d5a8]/85 shadow-none transition;
+    @apply hover:text-[#f0dfa0];
+  }
+
+  .rpg-header-link-active {
+    color: #f0dfa0;
+    text-decoration: underline;
+    text-decoration-color: rgb(184 134 11 / 0.85);
+    text-underline-offset: 4px;
+  }
+
+  /* ── RPG Elastic Panels — 9-slice border-image ───────────────────── */
+
+  /*
+   * UI_Pane_TextArea.png: 523×217 px
+   * Corner inset: ~40 px on each side of the source image.
+   * border-image-slice: 40 fill  →  corners locked, center fills the panel.
+   * border-image-width: 36px     →  corners rendered at 36 px regardless of
+   *                                 panel size (scales down from source 40 px).
+   * border-width: 36px           →  same, so layout box matches visual border.
+   */
+  .rpg-elastic-panel {
+    box-sizing: border-box;
+    overflow: visible;
+    border-style: solid;
+    border-width: 36px;
+    border-image-source: url("/rpg-ui/Panels/UI_Pane_TextArea.png");
+    border-image-slice: 40 fill;
+    border-image-width: 36px;
+    border-image-repeat: stretch;
+    background-color: transparent;
+    min-width: 0;
+  }
+
+  /* Scrollable inner region — hides scrollbar but keeps wheel/touch scroll */
+  /* Hero profile panel — no scroll clipping so the wallet side-tab can hang */
+  .rpg-hero-content {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    overflow: visible;
+  }
+
+  .rpg-scrollable-content {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    max-height: 72vh;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .rpg-scrollable-content::-webkit-scrollbar {
+    display: none;
+  }
+
+  .rpg-parchment-inner .text-ink {
+    color: #3a2214;
+  }
+
+  .rpg-parchment-inner .text-ink-muted {
+    color: #4a3224;
+  }
+
+  .rpg-parchment-inner .rpg-quest-scroll,
+  .rpg-parchment-inner .reward-shop-scroll {
+    /* 9-slice handles all borders; suppress any legacy overrides */
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+
+  @media (max-width: 1023px) {
+    .rpg-parchment-inner .reward-shop-scroll.reward-shop-card {
+      border: 1px solid rgb(120 53 15 / 0.2) !important;
+      border-radius: 0.375rem !important;
+      background-color: rgb(254 243 199 / 0.2) !important;
+    }
+  }
+
+  .rpg-parchment-inner .journal-panel,
+  .rpg-parchment-inner .magic-book-panel,
+  .rpg-parchment-inner .quest-card,
+  .rpg-parchment-inner .reward-shop-card,
+  .rpg-parchment-inner .reward-shop-wallet,
+  .rpg-parchment-inner .reward-shop-icon,
+  .rpg-parchment-inner .mentorship-invite-block,
+  .rpg-parchment-inner .mentorship-student-card,
+  .rpg-parchment-inner .faction-row,
+  .rpg-parchment-inner .hero-stat-block,
+  .rpg-parchment-inner .dashboard-view-switch,
+  .rpg-parchment-inner .hero-stat-slot-wrap {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+
+  .rpg-parchment-inner .edit-mode-toggle,
+  .rpg-parchment-inner .edit-mode-toggle-active {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .rpg-parchment-inner .journal-sort-select {
+    border-color: rgb(58 34 20 / 0.2);
+    background: transparent;
+  }
+
+  .rpg-parchment-inner .quest-card-summary:hover {
+    background: transparent !important;
+    opacity: 0.82;
+  }
+
+  .rpg-parchment-inner .reward-shop-card:hover {
+    box-shadow: none !important;
+  }
+
+  .rpg-filter-nav {
+    @apply mb-4 flex w-full min-w-0 flex-wrap gap-x-5 gap-y-2 border-b border-[#3a2214]/12 pb-2;
+  }
+
+  .rpg-section-nav {
+    @apply mb-4 flex flex-wrap gap-x-6 gap-y-2 border-b border-[#3a2214]/12 pb-2;
+  }
+
+  .rpg-text-link {
+    @apply relative inline-flex items-center gap-1 border-0 bg-transparent px-0 py-1 text-xs font-medium uppercase tracking-wider text-[#4a3224]/75 shadow-none transition;
+    @apply hover:text-[#8b6914];
+  }
+
+  .rpg-text-link-active {
+    color: #8b6914;
+  }
+
+  .rpg-text-link-active::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -9px;
+    height: 1px;
+    background: #b8860b;
+  }
+
+  .rpg-text-link-count {
+    @apply text-[10px] font-normal normal-case tracking-normal text-[#4a3224]/55;
+  }
+
+  .rpg-text-link-active .rpg-text-link-count {
+    color: #8b6914;
+  }
+
   .journal-panel {
     @apply rounded-xl border border-ink/10 bg-parchment/90 shadow-[var(--shadow-journal)] backdrop-blur-sm;
   }
@@ -79,11 +260,11 @@
   }
 
   .journal-tabs {
-    @apply flex flex-wrap gap-1 border-b border-ink/15 pb-0;
+    @apply mb-3 flex w-full min-w-0 flex-wrap gap-x-1 gap-y-2 border-b border-ink/15 pb-0;
   }
 
   .journal-tab {
-    @apply relative inline-flex items-center gap-1.5 rounded-t-lg border border-transparent px-3 py-2.5 text-sm font-medium text-ink-muted transition;
+    @apply relative inline-flex items-center gap-1 rounded-t-lg border border-transparent px-2 py-1.5 text-xs font-medium text-ink-muted transition sm:gap-1.5 sm:px-2.5 sm:py-2 sm:text-sm;
     @apply hover:bg-parchment-dark/40 hover:text-ink;
   }
 
@@ -105,7 +286,7 @@
   }
 
   .journal-tab-count {
-    @apply ml-0.5 min-w-[1.25rem] rounded-full bg-ink/5 px-1.5 py-0.5 text-center text-[10px] font-semibold text-ink-muted;
+    @apply ml-0.5 min-w-[1.1rem] rounded-full bg-ink/5 px-1 py-0 text-center text-[9px] font-semibold leading-4 text-ink-muted sm:min-w-[1.25rem] sm:px-1.5 sm:py-0.5 sm:text-[10px];
   }
 
   .journal-tab-active .journal-tab-count {
@@ -118,6 +299,11 @@
 
   .quest-card-summary {
     @apply cursor-pointer transition-colors hover:bg-parchment-dark/30;
+    max-width: 100%;
+  }
+
+  .quest-card-meta {
+    @apply shrink-0;
   }
 
   .quest-card-body {
@@ -140,8 +326,438 @@
     z-index: 100;
   }
 
+  /* ── RPG Quest Scroll (9-slice horizontal banner) ────────────────── */
+  /* Source: UI_ListItem2_Normal.png 468×170 — slice 20px all sides    */
+  .rpg-quest-scroll {
+    border-style: solid;
+    border-width: 14px 24px;
+    border-image-source: url('/rpg-ui/Lists/UI_ListItem2_Normal.png');
+    border-image-slice: 20 fill;
+    border-image-width: 14px 24px;
+    border-image-repeat: stretch;
+    background-color: transparent;
+    overflow: visible;
+  }
+
+  /* Hover state — swap texture, no transition (border-image not animatable) */
+  .rpg-quest-scroll:hover {
+    border-image-source: url('/rpg-ui/Lists/UI_ListItem2_Hover.png');
+  }
+
+  /* Dim state for completed / daily-done / failed quests */
+  .rpg-quest-scroll[data-quest-state="completed"],
+  .rpg-quest-scroll[data-quest-state="failed"],
+  .rpg-quest-scroll[data-quest-state="daily-done"] {
+    border-image-source: url('/rpg-ui/Lists/UI_ListItem2_Dim.png');
+    opacity: 0.75;
+  }
+
+  /* Overdue highlight — tint without losing the scroll texture */
+  .rpg-quest-scroll[data-quest-state="overdue"] {
+    filter: sepia(0.2) hue-rotate(-10deg);
+  }
+
+  /* Suppress inner button hover bg — the scroll handles visual hover */
+  .rpg-quest-scroll .quest-card-summary:hover {
+    background: transparent !important;
+  }
+
+  /* ── Icon slot (inventory cell wrapping the quest-type icon) ────── */
+  /* Source: UI_Btn_slot.png 113×126 — used as bg, contain             */
+  .rpg-quest-icon-slot {
+    position: relative;
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    background-image: url('/rpg-ui/Buttons/UI_Btn_slot.png');
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  /* ── RPG Checkbox indicator ─────────────────────────────────────── */
+  /* Source: UI_checkBox_bg.png 49×50 + UI_checkBox_mark.png 92×76    */
+  .rpg-quest-checkbox {
+    position: relative;
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    background-image: url('/rpg-ui/Controls/UI_checkBox_bg.png');
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  .rpg-quest-checkbox-mark {
+    position: absolute;
+    /* Mark image (92×76) is wider than box, bleed slightly */
+    inset: -3px -6px;
+    background-image: url('/rpg-ui/Controls/UI_checkBox_mark.png');
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    pointer-events: none;
+  }
+
+  /* ── RPG Progress Bar (XP / large) ───────────────────────────────── */
+  /* Source: UI_Slider1_bg.png 88×27 / UI_Slider1_fill.png 88×27       */
+  /* Same asset as faction bar but slightly taller (h: 12px)           */
+  .rpg-progress-bar-bg {
+    position: relative;
+    height: 12px;
+    background-image: url('/rpg-ui/Controls/UI_Slider1_bg.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+  }
+
+  .rpg-progress-bar-fill {
+    position: absolute;
+    inset: 0;
+    background-image: url('/rpg-ui/Controls/UI_Slider1_fill.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    transition: clip-path 0.55s ease;
+  }
+
+  /* ── RPG Faction / compact Bar ────────────────────────────────────  */
+  /* Source: UI_Slider1_bg.png 88×27 / UI_Slider1_fill.png 88×27       */
+  .rpg-faction-bar-bg {
+    position: relative;
+    height: 8px;
+    background-image: url('/rpg-ui/Controls/UI_Slider1_bg.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+  }
+
+  .rpg-faction-bar-fill {
+    position: absolute;
+    inset: 0;
+    background-image: url('/rpg-ui/Controls/UI_Slider1_fill.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    transition: clip-path 0.4s ease;
+  }
+
+  /* ── RPG Input Field (9-slice parchment frame) ────────────────────  */
+  /* Source: UI_InputField_bg.png 98×74 — slice 14px, no fill keyword  */
+  .rpg-input-field {
+    display: block;
+    width: 100%;
+    border-style: solid;
+    border-width: 10px 14px;
+    border-image-source: url('/rpg-ui/InputFields/UI_InputField_bg.png');
+    border-image-slice: 14;           /* no "fill" — keeps center clear */
+    border-image-width: 10px 14px;
+    border-image-repeat: stretch;
+    background-color: rgba(255, 248, 220, 0.35);
+    color: #3a2214;
+    outline: none;
+    /* padding inside the border-image frame */
+    padding: 2px 4px;
+    font-size: 0.8125rem; /* ~13px */
+    line-height: 1.4;
+    caret-color: #5c2c16;
+    /* reset any browser defaults that would clash */
+    -webkit-appearance: none;
+    appearance: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .rpg-input-field::placeholder {
+    color: #4a3224;
+    opacity: 0.5;
+  }
+
+  .rpg-input-field:focus {
+    background-color: rgba(255, 248, 220, 0.55);
+  }
+
+  /* ══════════════════════════════════════════════════════════════════ */
+  /* RPG BUTTONS                                                        */
+  /* ══════════════════════════════════════════════════════════════════ */
+
+  /* ── Red action button (UI_Common_Btn 256×91) — light cream text ─── */
+  .rpg-game-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    border-style: solid;
+    border-width: 14px 20px;
+    border-image-source: url('/rpg-ui/Buttons/UI_Common_Btn.png');
+    border-image-slice: 20 fill;
+    border-image-width: 14px 20px;
+    border-image-repeat: stretch;
+    background-color: transparent;
+    color: #fff8e7 !important;
+    text-shadow: 1px 1px 0 #000, 0 1px 3px rgba(0,0,0,0.45) !important;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    line-height: 1.2;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.1s ease, filter 0.12s ease;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+
+  .rpg-game-button:hover:not(:disabled) {
+    border-image-source: url('/rpg-ui/Buttons/UI_Common_Btn_dim.png');
+    filter: brightness(1.08);
+  }
+
+  .rpg-game-button:active:not(:disabled) {
+    transform: translateY(1px) scale(0.99);
+    filter: brightness(0.85);
+  }
+
+  .rpg-game-button:disabled {
+    border-image-source: url('/rpg-ui/Buttons/UI_Common_Btn_dim.png');
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* ── Buy variant: golden small button — dark ink on gold ─────────── */
+  .rpg-game-button-buy {
+    border-image-source: url('/rpg-ui/Buttons/UI_Btn_yellow_small.png');
+    border-image-slice: 12 fill;
+    border-image-width: 10px 14px;
+    border-width: 10px 14px;
+    color: #3a2214 !important;
+    text-shadow: none !important;
+  }
+
+  .rpg-game-button-buy:hover:not(:disabled) {
+    border-image-source: url('/rpg-ui/Buttons/UI_Btn_yellow.png');
+    filter: brightness(1.08);
+  }
+
+  .rpg-game-button-buy:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  /* ══════════════════════════════════════════════════════════════════ */
+  /* RPG TABS                                                           */
+  /* ══════════════════════════════════════════════════════════════════ */
+
+  /* ── Tab nav container ───────────────────────────────────────────── */
+  .rpg-game-tab-nav {
+    display: flex;
+    /* flex-wrap controlled by Tailwind responsive classes on the element */
+    align-items: flex-end;
+    gap: 0.15rem;
+    /* pull the tabs up so they visually sit ON the panel border below */
+    margin-bottom: -2px;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* ── Section tabs (Журнал / Магазин) — UI_tab2_Off/On 159×61 ─────── */
+  /* border-image-slice: 14 — cuts 14px corners from 159×61 source     */
+  .rpg-game-tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    border-style: solid;
+    border-width: 14px 18px;
+    border-image-source: url('/rpg-ui/Tabs/UI_tab2_Off.png');
+    border-image-slice: 14 fill;
+    border-image-width: 14px 18px;
+    border-image-repeat: stretch;
+    background-color: transparent;
+    color: #fff8e7;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.7);
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.12s ease, filter 0.1s ease;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    position: relative;
+    z-index: 1;
+  }
+
+  .rpg-game-tab:hover:not(:disabled) {
+    border-image-source: url('/rpg-ui/Tabs/UI_tab2_On.png');
+    color: #fff8e7;
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+    z-index: 2;
+  }
+
+  .rpg-game-tab-active {
+    border-image-source: url('/rpg-ui/Tabs/UI_tab2_On.png') !important;
+    color: #fff8e7 !important;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.8) !important;
+    font-weight: 700;
+    transform: translateY(-2px);
+    z-index: 3;
+  }
+
+  /* ── Compact filter tabs (Все / Главные / Ежедневные…) ───────────── */
+  .rpg-game-tab-sm {
+    border-width: 10px 14px;
+    border-image-width: 10px 14px;
+    font-size: 0.72rem;
+    padding: 0;
+  }
+
+  .rpg-game-tab-sm .rpg-text-link-count {
+    font-size: 0.65rem;
+    color: inherit;
+    opacity: 0.65;
+  }
+
+  /* Dim tab (disabled / unavailable) */
+  .rpg-game-tab-dim {
+    border-image-source: url('/rpg-ui/Tabs/UI_tab_dim.png') !important;
+    opacity: 0.55;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  /* ── Wallet side tab (hero card) — hangs off the LEFT edge, same     */
+  /* "peeking bookmark" language as the Журнал/Магазин tabs above ──── */
+  .hero-wallet-tab {
+    /* base: mostly outside the parchment border, seam dips slightly   */
+    /* under the frame (rpg-elastic-panel border is 36px + 4px p-1)    */
+    transform: translateX(calc(-100% - 34px));
+    transition: transform 0.2s ease, filter 0.15s ease;
+  }
+
+  .hero-wallet-tab:hover {
+    transform: translateX(calc(-100% - 42px));
+    filter: brightness(1.12);
+  }
+
+  /* ══════════════════════════════════════════════════════════════════ */
+  /* RPG POPUP PANEL                                                    */
+  /* ══════════════════════════════════════════════════════════════════ */
+
+  /* 9-slice dialog frame — UI_Pane_Popup.png 623×412                  */
+  /* Dark-red decorative bands top+bottom ~60px → border-width 60px   */
+  /* Left/right thin frame ~24px → border-width 24px                  */
+  .rpg-popup-panel {
+    border-style: solid;
+    border-width: 60px 24px;
+    border-image-source: url('/rpg-ui/Panels/UI_Pane_Popup.png');
+    border-image-slice: 60 24 fill;
+    border-image-width: 60px 24px;
+    border-image-repeat: stretch;
+    background-color: transparent;
+    box-shadow: 0 8px 48px rgb(44 24 16 / 0.55), 0 2px 12px rgb(0 0 0 / 0.3);
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+
+  /* Strip legacy styles applied by .journal-panel inside popup */
+  .rpg-popup-panel.journal-panel {
+    background: transparent !important;
+    border: none !important; /* border-image overrides this anyway */
+    box-shadow: 0 8px 48px rgb(44 24 16 / 0.55), 0 2px 12px rgb(0 0 0 / 0.3) !important;
+    backdrop-filter: none !important;
+  }
+
+  /* Header: title sits on the dark-red top band → light text         */
+  .rpg-popup-panel .rpg-popup-header h2,
+  .rpg-popup-panel .rpg-popup-header h1 {
+    color: #fff8e7 !important;
+    text-shadow: 0 1px 4px rgb(0 0 0 / 0.45);
+  }
+
+  .rpg-popup-panel .rpg-popup-header p {
+    color: rgb(255 248 231 / 0.65) !important;
+  }
+
+  /* Header separator inside popup */
+  .rpg-popup-panel .rpg-popup-header {
+    border-bottom: 1px solid rgb(92 44 22 / 0.15);
+  }
+
+  /* Footer area inside popup — transparent, above dark-red bottom band */
+  .rpg-popup-panel .rpg-popup-footer {
+    border-top: 1px solid rgb(92 44 22 / 0.15);
+    background: transparent;
+  }
+
+  /* Body form fields: comfortable breathing room */
+  .rpg-popup-panel .quest-create-body {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+
+  /* ══════════════════════════════════════════════════════════════════ */
+  /* CURSOR — системные стандарты                                       */
+  /* ══════════════════════════════════════════════════════════════════ */
+
+  .rpg-library-screen {
+    cursor: default;
+  }
+
+  .rpg-library-screen button:not([disabled]),
+  .rpg-library-screen a,
+  .rpg-library-screen [role="button"],
+  .rpg-library-screen .rpg-game-button:not(:disabled),
+  .rpg-library-screen .rpg-game-tab,
+  .rpg-library-screen label {
+    cursor: pointer;
+  }
+
+  .rpg-library-screen input,
+  .rpg-library-screen textarea,
+  .rpg-library-screen select {
+    cursor: text;
+  }
+
+  /* ══════════════════════════════════════════════════════════════════ */
+  /* MEDIEVAL TYPOGRAPHY POLISH                                         */
+  /* ══════════════════════════════════════════════════════════════════ */
+
+  /* Section titles — Palatino уже подключён, усиливаем трекинг       */
+  .journal-section-title {
+    letter-spacing: 0.04em;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Hero name & display-font elements */
+  .font-display {
+    text-rendering: optimizeLegibility;
+    font-variant-ligatures: common-ligatures;
+  }
+
+  /* Все маленькие верхние подписи (LEVEL, GOLD, кнопки-секции)       */
+  .rpg-popup-panel h2,
+  .rpg-popup-panel h3 {
+    font-family: var(--font-display);
+    letter-spacing: 0.03em;
+    color: #3a2214;
+  }
+
+  /* Кнопки с чуть более читабельным трекингом */
+  .rpg-game-button {
+    letter-spacing: 0.03em;
+  }
+
   .difficulty-badge {
-    @apply inline-flex max-w-full items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold tracking-wide;
+    @apply inline-flex max-w-full items-center gap-0.5 rounded-full border px-1.5 py-0 text-[9px] font-semibold leading-4 tracking-wide sm:gap-1 sm:px-2 sm:py-0.5 sm:text-[10px];
+  }
+
+  .difficulty-badge-compact {
+    @apply px-1 py-0 sm:px-1.5;
   }
 
   .difficulty-badge-swords {
@@ -215,49 +831,10 @@
     @apply flex-wrap;
   }
 
-  .day-night-widget {
-    @apply pointer-events-auto w-[10.5rem] overflow-hidden rounded-2xl border border-white/30 shadow-[0_8px_24px_rgb(44_24_16_/_0.18)];
-  }
-
-  .day-night-widget-svg {
-    @apply block h-auto w-full;
-  }
-
-  .day-night-widget-arc {
-    stroke: rgb(255 255 255 / 0.55);
-  }
-
-  .day-night-widget-horizon {
-    stroke: rgb(255 255 255 / 0.35);
-  }
-
-  .day-night-widget-sun-glow {
-    fill: rgb(255 214 102 / 0.35);
-  }
-
-  .day-night-widget-moon-glow {
-    fill: rgb(200 210 255 / 0.28);
-  }
-
-  .day-night-widget-icon {
-    @apply text-[13px];
-    font-family: var(--font-body);
-  }
-
-  .day-night-widget-info {
-    @apply -mt-1 border-t border-white/20 bg-parchment/90 px-3 py-2 text-center backdrop-blur-sm;
-  }
-
-  .day-night-widget-clock {
-    @apply font-display text-lg leading-none text-ink;
-  }
-
-  .day-night-widget-meta {
-    @apply mt-1 text-[10px] uppercase tracking-wide text-ink-muted;
-  }
+  /* (old capsule widget styles removed — replaced by .day-night-strip) */
 
   .quest-deadline-compact {
-    @apply shrink-0 rounded-full border border-sky-300/45 bg-sky-50/80 px-2 py-0.5 text-[10px] font-semibold text-sky-950;
+    @apply inline-flex shrink-0 items-center whitespace-nowrap rounded-full border border-sky-300/45 bg-sky-50/80 px-1.5 py-0 text-[9px] font-semibold leading-4 text-sky-950 sm:px-2 sm:py-0.5 sm:text-[10px];
   }
 
   .quest-deadline-trigger {
@@ -363,12 +940,265 @@
     @apply bg-gold/15 text-ink shadow-sm;
   }
 
+  /* ── Reward shop item row ─────────────────────────────────────────── */
+  /* Mobile: plain card. Desktop (lg+): UI_ListItem2 scroll 9-slice. */
+  .reward-shop-scroll {
+    box-sizing: border-box;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    border: 1px solid rgb(120 53 15 / 0.2);
+    border-radius: 0.375rem;
+    background-color: rgb(254 243 199 / 0.2);
+    overflow: visible;
+    list-style: none;
+  }
+
+  @media (min-width: 1024px) {
+    .reward-shop-scroll {
+      height: 200px;
+      min-height: 200px;
+      max-height: 200px;
+      border-style: solid;
+      border-width: 14px 24px;
+      border-radius: 0;
+      border-image-source: url('/rpg-ui/Lists/UI_ListItem2_Normal.png');
+      border-image-slice: 20 fill;
+      border-image-width: 14px 24px;
+      border-image-repeat: stretch;
+      background-color: transparent;
+      overflow: hidden;
+    }
+
+    .reward-shop-scroll:hover {
+      border-image-source: url('/rpg-ui/Lists/UI_ListItem2_Hover.png');
+    }
+  }
+
+  .reward-shop-icon-slot {
+    position: relative;
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 3.25rem;
+    height: 3.25rem;
+    background-image: url('/rpg-ui/Buttons/UI_Btn_slot.png');
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    image-rendering: pixelated;
+  }
+
+  .reward-shop-list-scroll {
+    box-sizing: border-box;
+    max-height: min(52vh, 520px);
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding-right: 0.35rem;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  @media (min-width: 1024px) {
+    .rpg-dashboard-right-col .rpg-scrollable-content {
+      display: flex;
+      flex: 1 1 auto;
+      flex-direction: column;
+      min-height: 0;
+      max-height: none;
+      overflow: hidden;
+    }
+
+    .reward-shop-root .reward-shop-list-scroll {
+      flex: 1 1 auto;
+      min-height: 0;
+      max-height: none;
+    }
+  }
+
+  .reward-shop-desc-scroll {
+    box-sizing: border-box;
+    max-height: none;
+    overflow-x: hidden;
+    overflow-y: visible;
+    padding-right: 0;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  @media (min-width: 1024px) {
+    .reward-shop-desc-scroll {
+      max-height: 85px;
+      overflow-y: auto;
+      padding-right: 0.2rem;
+    }
+  }
+
+  .quest-journal-list-scroll {
+    box-sizing: border-box;
+    max-height: min(52vh, 520px);
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding-right: 0.35rem;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  .quest-card-desc-scroll {
+    box-sizing: border-box;
+    max-height: 120px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding-right: 0.2rem;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* ── Fantasy vertical scrollbars (UI_VSlider track + handle) ───── */
+  .rpg-fantasy-vscroll {
+    scrollbar-width: thin;
+    scrollbar-color: #8b6914 rgb(58 34 20 / 0.12);
+  }
+
+  .rpg-fantasy-vscroll::-webkit-scrollbar {
+    width: 16px;
+  }
+
+  .rpg-fantasy-vscroll::-webkit-scrollbar-track {
+    background: url('/rpg-ui/Controls/UI_VSlider_bg.png') center top / 100% auto repeat-y;
+    border-radius: 0;
+  }
+
+  .rpg-fantasy-vscroll::-webkit-scrollbar-thumb {
+    background: url('/rpg-ui/Controls/UI_VSlider_handle.png') center center / contain no-repeat;
+    min-height: 28px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  .rpg-fantasy-vscroll-sm {
+    scrollbar-width: thin;
+    scrollbar-color: #8b6914 rgb(58 34 20 / 0.12);
+  }
+
+  .rpg-fantasy-vscroll-sm::-webkit-scrollbar {
+    width: 12px;
+  }
+
+  .rpg-fantasy-vscroll-sm::-webkit-scrollbar-track {
+    background: url('/rpg-ui/Controls/UI_VSlider_bg.png') center top / 100% auto repeat-y;
+    border-radius: 0;
+  }
+
+  .rpg-fantasy-vscroll-sm::-webkit-scrollbar-thumb {
+    background: url('/rpg-ui/Controls/UI_Slider1_Handle.png') center center / contain no-repeat;
+    min-height: 20px;
+    border: 1px solid transparent;
+    background-clip: padding-box;
+  }
+
+  .reward-price-tooltip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .reward-price-tooltip-popover {
+    pointer-events: none;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.35rem);
+    z-index: 30;
+    min-width: 9.5rem;
+    max-width: 14rem;
+    border-style: solid;
+    border-width: 8px 12px;
+    border-image-source: url('/rpg-ui/Panels/UI_Pane_TextArea.png');
+    border-image-slice: 20 fill;
+    border-image-width: 8px 12px;
+    border-image-repeat: stretch;
+    background-color: transparent;
+    padding: 0.35rem 0.5rem;
+    text-align: center;
+    font-size: 0.7rem;
+    line-height: 1.35;
+    color: #3a2214;
+    opacity: 0;
+    transform: translateY(-2px);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    white-space: normal;
+  }
+
+  .reward-price-tooltip:hover .reward-price-tooltip-popover,
+  .reward-price-tooltip:focus-within .reward-price-tooltip-popover {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .reward-price-tooltip-popover-markup {
+    color: #9a3412;
+  }
+
+  .reward-price-tooltip-popover-discount {
+    color: #166534;
+  }
+
   .reward-shop-card {
     @apply transition hover:shadow-journal-hover;
   }
 
   .reward-shop-icon {
     box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.45);
+  }
+
+  /* ── Hero stat slot frames (Level / Gold) ─────────────────────── */
+  .hero-stat-slot {
+    background-image: url('/rpg-ui/Buttons/UI_Btn_slot.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    background-color: transparent;
+    /* Square slot: fixed size keeps rollers proportional */
+    width: 72px;
+    height: 72px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    image-rendering: pixelated;
+  }
+
+  /* ── Mentorship title plaque ──────────────────────────────────────  */
+  .mentor-title-plaque {
+    background-image: url('/rpg-ui/Decorations/UI_TitleBg.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    width: 100%;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ── Minimal day/night text strip ───────────────────────────────── */
+  .day-night-strip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-family: var(--font-display, Georgia, serif);
+    font-size: 0.82rem;
+    letter-spacing: 0.05em;
+    color: #fff8e7;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9), 0 1px 2px rgba(0, 0, 0, 0.8);
+  }
+
+  .day-night-strip img {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+    image-rendering: pixelated;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.8));
   }
 
   .quest-create-panel {
@@ -623,6 +1453,18 @@
     color: var(--color-gold);
   }
 
+  .hero-panel-expanded,
+  .hero-panel-compact,
+  .hero-lore-section,
+  .hero-lore-body,
+  .hero-lore-body p {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+    -webkit-line-clamp: unset;
+    line-clamp: unset;
+  }
+
   .hero-character-panel {
     box-shadow: 0 12px 40px rgb(44 24 16 / 0.18);
   }
@@ -645,13 +1487,57 @@
     @apply bg-gold/15;
   }
 
-  .quest-card-summary {
-    overflow: hidden;
-  }
-
   .journal-button-retire-daily {
     @apply inline-flex items-center gap-2 rounded-lg border border-ink/20 bg-parchment-dark/50 px-4 py-2 text-sm font-medium text-ink-muted transition;
     @apply hover:border-rose-300/50 hover:bg-rose-50/70 hover:text-rose-900 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .journal-sort-select {
+    @apply rounded-lg border border-ink/15 bg-parchment/80 px-2.5 py-1.5 text-xs text-ink outline-none transition;
+    @apply hover:border-gold/35 focus:border-gold/50 focus:ring-1 focus:ring-gold/25;
+  }
+
+  .quest-pagination-button {
+    @apply inline-flex min-w-[2rem] items-center justify-center rounded-lg border border-ink/15 bg-parchment/70 px-2.5 py-1.5 text-xs font-medium text-ink transition;
+    @apply hover:border-gold/35 hover:bg-gold/10 disabled:cursor-not-allowed disabled:opacity-45;
+  }
+
+  .quest-pagination-button-active {
+    @apply border-gold/45 bg-gold/15 text-ink;
+  }
+
+  .hero-lore-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(184 134 11 / 0.45) transparent;
+  }
+
+  .hero-lore-scroll::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .hero-lore-scroll::-webkit-scrollbar-thumb {
+    border-radius: 9999px;
+    background: rgb(184 134 11 / 0.45);
+  }
+
+  .hero-lore-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .reward-price-label {
+    @apply rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide;
+  }
+
+  .reward-price-label-discount {
+    @apply border border-emerald-500/35 bg-emerald-50/80 text-emerald-900;
+  }
+
+  .reward-price-label-markup {
+    @apply border border-orange-500/35 bg-orange-50/85 text-orange-950;
+  }
+
+  .reward-price-final {
+    text-shadow: 0 0 12px rgb(184 134 11 / 0.35);
   }
 }
 
@@ -748,4 +1634,437 @@
 
 [data-theme="cyberpunk"] .difficulty-badge-legendary {
   @apply border-[#ff2d95]/45 bg-[#ff2d95]/10 text-[#ffd0e8];
+}
+
+/* ── Тема: Готика (Gothic / Старый Лагерь) ── */
+:root.theme-gothic,
+[data-theme="gothic"] {
+  --bg-dark: #121010;
+  --bg-parchment: #2c2117;
+  --gothic-gold: #c6ac63;
+  --gothic-text: #e1d3b8;
+  --gothic-border: #4d3f33;
+  --gothic-accent: #9b2808;
+
+  --color-parchment: #3a2d22;
+  --color-parchment-dark: #2c2117;
+  --color-ink: #e1d3b8;
+  --color-ink-muted: #a89578;
+  --color-gold: #c6ac63;
+  --color-gold-dim: #9a8449;
+  --color-leather: #1a1410;
+  --shadow-journal: 0 0 0 1px rgb(77 63 51 / 0.85),
+    0 6px 20px rgb(0 0 0 / 0.45),
+    inset 0 1px 0 rgb(198 172 99 / 0.08);
+  --shadow-journal-hover: 0 0 0 1px rgb(198 172 99 / 0.45),
+    0 10px 28px rgb(0 0 0 / 0.55),
+    inset 0 0 18px rgb(155 40 8 / 0.08);
+}
+
+[data-theme="gothic"] body,
+body.theme-gothic {
+  background-color: var(--bg-dark);
+  color: var(--gothic-text);
+  font-family: var(--font-gothic-body), "EB Garamond", Georgia, serif;
+  background-image: radial-gradient(
+      ellipse at 18% 0%,
+      rgb(60 45 30 / 0.35) 0%,
+      transparent 55%
+    ),
+    radial-gradient(
+      ellipse at 82% 100%,
+      rgb(30 22 16 / 0.65) 0%,
+      transparent 50%
+    );
+}
+
+[data-theme="gothic"] h1,
+[data-theme="gothic"] h2,
+[data-theme="gothic"] h3,
+[data-theme="gothic"] .font-display {
+  font-family: var(--font-gothic-display), "Cormorant Garamond", "Palatino Linotype", serif;
+  letter-spacing: 0.02em;
+}
+
+[data-theme="gothic"] main {
+  border: 2px solid var(--gothic-border);
+  border-radius: 0.35rem;
+  padding: 1rem;
+  background: linear-gradient(
+    180deg,
+    rgb(44 33 23 / 0.55) 0%,
+    rgb(18 16 16 / 0.35) 100%
+  );
+  box-shadow: inset 0 0 0 1px rgb(198 172 99 / 0.12),
+    0 0 0 3px rgb(18 16 16 / 0.9);
+}
+
+@media (min-width: 1024px) {
+  [data-theme="gothic"] main {
+    padding: 1.25rem 1.5rem;
+  }
+}
+
+[data-theme="gothic"] .journal-panel {
+  border-color: var(--gothic-border);
+  border-radius: 0.25rem;
+  background: linear-gradient(
+    165deg,
+    rgb(58 45 34 / 0.96) 0%,
+    rgb(44 33 23 / 0.98) 100%
+  );
+  box-shadow: var(--shadow-journal);
+}
+
+[data-theme="gothic"] .hero-panel-expanded,
+[data-theme="gothic"] .hero-panel-compact {
+  background: linear-gradient(
+    180deg,
+    rgb(44 33 23 / 0.98) 0%,
+    rgb(34 26 18 / 1) 100%
+  );
+}
+
+[data-theme="gothic"] .journal-button-primary {
+  border-color: rgb(198 172 99 / 0.45);
+  background: linear-gradient(
+    180deg,
+    rgb(198 172 99 / 0.22) 0%,
+    rgb(120 98 52 / 0.18) 100%
+  );
+  color: var(--gothic-text);
+}
+
+[data-theme="gothic"] .journal-button-primary:hover {
+  background: linear-gradient(
+    180deg,
+    rgb(198 172 99 / 0.32) 0%,
+    rgb(120 98 52 / 0.26) 100%
+  );
+}
+
+[data-theme="gothic"] .journal-button-secondary,
+[data-theme="gothic"] .journal-input,
+[data-theme="gothic"] .journal-sort-select {
+  border-color: var(--gothic-border);
+  background: rgb(34 26 18 / 0.85);
+  color: var(--gothic-text);
+}
+
+[data-theme="gothic"] .journal-tab-active {
+  border-color: var(--gothic-border);
+  background: rgb(58 45 34 / 0.9);
+  color: var(--gothic-text);
+}
+
+[data-theme="gothic"] .journal-tab-active::after {
+  background: var(--gothic-gold);
+}
+
+[data-theme="gothic"] .dashboard-view-button-active {
+  background: rgb(198 172 99 / 0.14);
+  color: var(--gothic-text);
+}
+
+[data-theme="gothic"] .theme-switcher-button {
+  border-color: var(--gothic-border);
+  background: rgb(44 33 23 / 0.9);
+  color: var(--gothic-text);
+}
+
+[data-theme="gothic"] .edit-mode-toggle {
+  border-radius: 9999px;
+  border-color: rgb(198 172 99 / 0.55);
+  background: radial-gradient(
+    circle at 35% 30%,
+    rgb(198 172 99 / 0.45) 0%,
+    rgb(90 72 38 / 0.85) 55%,
+    rgb(44 33 23 / 1) 100%
+  );
+  box-shadow: 0 0 0 1px rgb(198 172 99 / 0.25),
+    inset 0 1px 0 rgb(255 255 255 / 0.12);
+}
+
+[data-theme="gothic"] .edit-mode-toggle-active {
+  border-color: var(--gothic-gold);
+  box-shadow: 0 0 0 2px rgb(198 172 99 / 0.35),
+    0 0 14px rgb(155 40 8 / 0.25);
+}
+
+[data-theme="gothic"] .quest-card {
+  border-width: 1px;
+  border-color: var(--gothic-border);
+  background: linear-gradient(
+    180deg,
+    rgb(52 40 30 / 0.95) 0%,
+    rgb(40 31 22 / 0.98) 100%
+  );
+}
+
+[data-theme="gothic"] .quest-card:hover,
+[data-theme="gothic"] .quest-card:has(.quest-card-summary[aria-expanded="true"]) {
+  border-color: rgb(198 172 99 / 0.55);
+  box-shadow: var(--shadow-journal-hover);
+}
+
+[data-theme="gothic"] .quest-card-summary:hover {
+  background: rgb(198 172 99 / 0.06);
+}
+
+[data-theme="gothic"] .quest-card-chevron {
+  color: var(--gothic-gold);
+  font-size: 0;
+  line-height: 1;
+}
+
+[data-theme="gothic"] .quest-card-chevron::before {
+  content: "⚔";
+  font-size: 0.95rem;
+}
+
+[data-theme="gothic"] .quest-card[data-difficulty-tier]::before {
+  content: "";
+  position: absolute;
+  left: 0.55rem;
+  top: 0.85rem;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 9999px;
+  box-shadow: 0 0 6px currentColor;
+}
+
+[data-theme="gothic"] .quest-card {
+  position: relative;
+}
+
+[data-theme="gothic"] .quest-card[data-difficulty-tier="legendary"]::before {
+  color: #9b2808;
+  background: #9b2808;
+}
+
+[data-theme="gothic"] .quest-card[data-difficulty-tier="trial"]::before {
+  color: #9b2808;
+  background: #9b2808;
+}
+
+[data-theme="gothic"] .quest-card[data-difficulty-tier="adventure"]::before {
+  color: #2e86de;
+  background: #2e86de;
+}
+
+[data-theme="gothic"] .quest-card[data-difficulty-tier="errand"]::before {
+  color: #556b2f;
+  background: #556b2f;
+}
+
+[data-theme="gothic"] .quest-card-summary {
+  padding-left: 1.35rem;
+}
+
+[data-theme="gothic"] .difficulty-badge {
+  border-radius: 0.2rem;
+  border-width: 1px;
+  font-family: var(--font-gothic-display), "Cormorant Garamond", serif;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08),
+    0 2px 4px rgb(0 0 0 / 0.35);
+}
+
+[data-theme="gothic"] .difficulty-badge-errand {
+  border-color: rgb(85 107 47 / 0.65);
+  background: linear-gradient(180deg, rgb(44 52 30 / 0.95), rgb(30 36 20 / 0.98));
+  color: #8fad5a;
+}
+
+[data-theme="gothic"] .difficulty-badge-adventure {
+  border-color: rgb(46 134 222 / 0.55);
+  background: linear-gradient(180deg, rgb(30 48 68 / 0.95), rgb(20 34 52 / 0.98));
+  color: #7ec8ff;
+  box-shadow: inset 0 0 10px rgb(46 134 222 / 0.12),
+    0 2px 4px rgb(0 0 0 / 0.35);
+}
+
+[data-theme="gothic"] .difficulty-badge-trial {
+  border-color: rgb(155 40 8 / 0.6);
+  background: linear-gradient(180deg, rgb(68 28 16 / 0.95), rgb(42 18 10 / 0.98));
+  color: #e8a07a;
+  box-shadow: inset 0 0 12px rgb(155 40 8 / 0.2),
+    0 2px 4px rgb(0 0 0 / 0.35);
+}
+
+[data-theme="gothic"] .difficulty-badge-legendary {
+  border-color: rgb(155 40 8 / 0.75);
+  background: linear-gradient(180deg, rgb(82 24 10 / 0.98), rgb(50 14 6 / 1));
+  color: #ffb08a;
+  box-shadow: inset 0 0 14px rgb(155 40 8 / 0.35),
+    0 0 10px rgb(155 40 8 / 0.2);
+}
+
+[data-theme="gothic"] .quest-deadline-compact {
+  border-color: rgb(46 134 222 / 0.4);
+  background: rgb(30 48 68 / 0.75);
+  color: #b8dcff;
+}
+
+[data-theme="gothic"] .site-header h1 {
+  color: var(--gothic-gold);
+  text-shadow: 0 1px 0 rgb(0 0 0 / 0.6);
+}
+
+[data-theme="gothic"] .hero-lore-scroll::-webkit-scrollbar-thumb {
+  background: rgb(198 172 99 / 0.55);
+}
+
+
+.auth-page {
+  display: flex;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-card {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid rgb(44 24 16 / 0.1);
+  background: rgb(244 232 200 / 0.9);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-journal);
+  backdrop-filter: blur(4px);
+}
+
+@media (min-width: 768px) {
+  .auth-card {
+    padding: 2rem;
+  }
+}
+
+.auth-card-gothic {
+  box-shadow: inset 0 0 0 1px rgb(198 172 99 / 0.2),
+    0 8px 28px rgb(0 0 0 / 0.35);
+}
+
+.auth-link {
+  text-decoration: underline;
+  text-decoration-color: rgb(184 134 11 / 0.4);
+  text-underline-offset: 2px;
+  transition: color 0.2s;
+}
+
+.auth-link:hover {
+  color: var(--color-gold);
+}
+
+.auth-loading {
+  max-width: 24rem;
+}
+
+[data-theme="gothic"] .auth-title {
+  font-family: var(--font-gothic-display), Georgia, serif;
+  letter-spacing: 0.02em;
+}
+
+[data-theme="gothic"] .auth-kicker {
+  font-family: var(--font-gothic-body), Georgia, serif;
+}
+
+.auth-checkbox-box {
+  display: inline-flex;
+  height: 1.15rem;
+  width: 1.15rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.25rem;
+  border: 2px solid rgb(44 24 16 / 0.25);
+  background: rgb(244 232 200 / 0.65);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.45);
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+
+.auth-checkbox-input:checked + .auth-checkbox-box {
+  border-color: rgb(184 134 11 / 0.65);
+  background: linear-gradient(180deg, rgb(204 164 59 / 0.35), rgb(184 134 11 / 0.2));
+  box-shadow: inset 0 0 0 1px rgb(204 164 59 / 0.35),
+    0 0 8px rgb(204 164 59 / 0.25);
+}
+
+.auth-checkbox-input:checked + .auth-checkbox-box::after {
+  content: "✓";
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #3d2914;
+  line-height: 1;
+}
+
+.auth-checkbox-input:focus-visible + .auth-checkbox-box {
+  outline: 2px solid rgb(184 134 11 / 0.45);
+  outline-offset: 2px;
+}
+
+[data-theme="gothic"] .auth-checkbox-box {
+  border-color: rgb(198 172 99 / 0.35);
+  background: rgb(20 16 12 / 0.55);
+}
+
+[data-theme="gothic"] .auth-checkbox-input:checked + .auth-checkbox-box {
+  border-color: rgb(198 172 99 / 0.75);
+  background: linear-gradient(
+    180deg,
+    rgb(198 172 99 / 0.28),
+    rgb(80 60 20 / 0.35)
+  );
+}
+
+[data-theme="gothic"] .auth-checkbox-input:checked + .auth-checkbox-box::after {
+  color: #e8dcc8;
+}
+
+/* --- Active effect buff rings --- */
+.active-effects-bar {
+  margin-top: 0.75rem;
+}
+
+.active-effect-ring {
+  --effect-remaining: 100;
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  background: conic-gradient(
+    rgb(34 197 94 / 0.95) calc(var(--effect-remaining) * 1%),
+    rgb(34 197 94 / 0.18) 0
+  );
+  transition: background 0.35s linear;
+}
+
+.active-effect-ring::before {
+  content: "";
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  background: var(--parchment, #f4ead5);
+  box-shadow: inset 0 0 0 1px rgb(34 197 94 / 0.25);
+}
+
+.active-effect-icon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.active-effect-tooltip {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+}
+
+[data-theme="gothic"] .active-effect-ring::before {
+  background: rgb(20 16 12 / 0.95);
 }

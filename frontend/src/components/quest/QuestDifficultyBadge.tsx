@@ -15,17 +15,19 @@ const TIER_CLASS = {
 interface QuestDifficultyBadgeProps {
   difficulty: QuestDifficulty;
   showLabel?: boolean;
+  compact?: boolean;
 }
 
 export function QuestDifficultyBadge({
   difficulty,
   showLabel = true,
+  compact = false,
 }: QuestDifficultyBadgeProps) {
   const level = getDifficultyLevel(difficulty);
 
   return (
     <span
-      className={`difficulty-badge ${TIER_CLASS[level.tier]} max-w-[9.5rem] shrink-0 sm:max-w-none`}
+      className={`difficulty-badge ${TIER_CLASS[level.tier]} ${compact ? "difficulty-badge-compact" : ""} shrink-0`}
       title={formatDifficultyLabel(difficulty)}
       aria-label={`Сложность: ${formatDifficultyLabel(difficulty)}`}
     >

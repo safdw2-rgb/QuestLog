@@ -1,5 +1,6 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.models.adventurer import Adventurer
 from app.schemas.adventurer import AdventurerRead, AdventurerUpdate
@@ -10,12 +11,26 @@ async def get_adventurer(db: AsyncSession, adventurer_id: int) -> Adventurer | N
     return await db.get(Adventurer, adventurer_id)
 
 
+async def get_adventurer_by_user_id(
+    db: AsyncSession,
+    user_id: int,
+) -> Adventurer | None:
+    result = await db.execute(
+        select(Adventurer)
+        .options(selectinload(Adventurer.user))
+        .where(Adventurer.user_id == user_id),
+    )
+    return result.scalar_one_or_none()
+
+
 def to_adventurer_read(adventurer: Adventurer) -> AdventurerRead:
     next_level_threshold = total_xp_for_level(adventurer.level + 1)
     xp_to_next_level = max(0, next_level_threshold - adventurer.experience_points)
 
     return AdventurerRead(
         id=adventurer.id,
+        user_id=adventurer.user_id,
+        invite_code=adventurer.user.invite_code if adventurer.user else "",
         username=adventurer.username,
         display_name=adventurer.display_name,
         experience_points=adventurer.experience_points,

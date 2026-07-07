@@ -2,20 +2,21 @@ import logging
 import re
 from datetime import datetime
 
-import httpx
 from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.crud.faction import list_factions
 from app.db.session import async_session_factory
-from app.models.faction import Faction
-from app.services.ai_generator import GEMINI_API_URL
+from app.models.adventurer_faction_reputation import AdventurerFactionReputation
+from app.schemas.faction import FactionRead
+from app.services.gemini_client import generate_content
 from app.services.telegram_notifier import send_telegram_message
 
 logger = logging.getLogger(__name__)
 
 MAX_REPORT_LENGTH = 2000
+LEGACY_SEASON_ADVENTURER_ID = 1
 
 SEASON_SYSTEM_PROMPT = """Ты — Лютик (Dandelion) из «Ведьмака 3»: бард и хроникёр.
 Составь художественный, ироничный ежемесячный отчёт-балладу о балансе репутации героя Павла между фракциями.
@@ -28,7 +29,10 @@ SEASON_SYSTEM_PROMPT = """Ты — Лютик (Dandelion) из «Ведьмак�
 class FactionSeasonReportService:
     async def run_monthly_season(self) -> None:
         async with async_session_factory() as db:
-            factions = await list_factions(db)
+            factions = await list_factions(
+                db,
+                adventurer_id=LEGACY_SEASON_ADVENTURER_ID,
+            )
             active = [f for f in factions if f.reputation_points > 0]
 
             if not active:
@@ -44,8 +48,7 @@ class FactionSeasonReportService:
             if sent:
                 await self._reset_all_reputation(db)
                 logger.info(
-                    "Monthly faction season: report sent, %s faction(s) reset",
-                    len(factions),
+                    "Monthly faction season: report sent, reputations reset",
                 )
             else:
                 logger.warning(
@@ -54,7 +57,7 @@ class FactionSeasonReportService:
 
     async def _generate_report(
         self,
-        factions: list[Faction],
+        factions: list[FactionRead],
         month_label: str,
     ) -> str:
         lines = [
@@ -80,30 +83,13 @@ class FactionSeasonReportService:
         return self._build_fallback_report(factions)
 
     async def _generate_via_gemini(self, user_prompt: str) -> str:
-        payload = {
-            "contents": [
-                {
-                    "parts": [
-                        {"text": f"{SEASON_SYSTEM_PROMPT}\n\n{user_prompt}"},
-                    ],
-                },
-            ],
-            "generationConfig": {
-                "temperature": 0.9,
-                "maxOutputTokens": 768,
-            },
-        }
-
-        async with httpx.AsyncClient(timeout=45.0) as client:
-            response = await client.post(
-                GEMINI_API_URL,
-                params={"key": settings.gemini_api_key},
-                json=payload,
-            )
-            response.raise_for_status()
-
-        data = response.json()
-        content = data["candidates"][0]["content"]["parts"][0]["text"]
+        content = await generate_content(
+            system_instruction=SEASON_SYSTEM_PROMPT,
+            user_prompt=user_prompt,
+            temperature=0.9,
+            max_output_tokens=768,
+            timeout=45.0,
+        )
         return self._normalize_text(content)
 
     @staticmethod
@@ -116,7 +102,7 @@ class FactionSeasonReportService:
         return cleaned
 
     @staticmethod
-    def _build_fallback_report(factions: list[Faction]) -> str:
+    def _build_fallback_report(factions: list[FactionRead]) -> str:
         top = max(factions, key=lambda item: item.reputation_points)
         low = min(factions, key=lambda item: item.reputation_points)
         return (
@@ -128,7 +114,9 @@ class FactionSeasonReportService:
 
     @staticmethod
     async def _reset_all_reputation(db: AsyncSession) -> None:
-        await db.execute(update(Faction).values(reputation_points=0))
+        await db.execute(
+            update(AdventurerFactionReputation).values(reputation_points=0),
+        )
         await db.commit()
 
 

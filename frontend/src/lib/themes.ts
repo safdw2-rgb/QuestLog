@@ -1,4 +1,4 @@
-export type AppTheme = "parchment" | "dungeon" | "cyberpunk";
+export type AppTheme = "parchment" | "dungeon" | "cyberpunk" | "gothic";
 
 export const THEME_STORAGE_KEY = "questlog-theme";
 
@@ -22,10 +22,20 @@ export const APP_THEMES: {
     label: "Киберпанк",
     description: "Неон и контраст",
   },
+  {
+    id: "gothic",
+    label: "Готика",
+    description: "Старый Лагерь и пергамент",
+  },
 ];
 
 export function isAppTheme(value: string): value is AppTheme {
-  return value === "parchment" || value === "dungeon" || value === "cyberpunk";
+  return (
+    value === "parchment" ||
+    value === "dungeon" ||
+    value === "cyberpunk" ||
+    value === "gothic"
+  );
 }
 
 export function readStoredTheme(): AppTheme {
@@ -35,6 +45,9 @@ export function readStoredTheme(): AppTheme {
 
   try {
     const stored = localStorage.getItem(THEME_STORAGE_KEY);
+    if (stored === "rpg" || stored === "medieval") {
+      return "parchment";
+    }
     if (stored && isAppTheme(stored)) {
       return stored;
     }

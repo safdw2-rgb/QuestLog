@@ -1,42 +1,29 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_db
+from app.api.deps import get_current_adventurer, get_db
 from app.crud import adventurer as adventurer_crud
 from app.crud import hero_lore as hero_lore_crud
+from app.models.adventurer import Adventurer
 from app.schemas.adventurer import AdventurerRead, AdventurerUpdate
 from app.services.hero_lore_generator import GeminiGenerationError
 
 router = APIRouter(prefix="/adventurers", tags=["adventurers"])
 
 
-@router.get("/{adventurer_id}", response_model=AdventurerRead)
-async def get_adventurer(
-    adventurer_id: int,
-    db: AsyncSession = Depends(get_db),
+@router.get("/me", response_model=AdventurerRead)
+async def get_my_adventurer(
+    adventurer: Adventurer = Depends(get_current_adventurer),
 ) -> AdventurerRead:
-    adventurer = await adventurer_crud.get_adventurer(db, adventurer_id)
-    if adventurer is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Adventurer not found",
-        )
     return adventurer_crud.to_adventurer_read(adventurer)
 
 
-@router.patch("/{adventurer_id}", response_model=AdventurerRead)
-async def update_adventurer(
-    adventurer_id: int,
+@router.patch("/me", response_model=AdventurerRead)
+async def update_my_adventurer(
     data: AdventurerUpdate,
+    adventurer: Adventurer = Depends(get_current_adventurer),
     db: AsyncSession = Depends(get_db),
 ) -> AdventurerRead:
-    adventurer = await adventurer_crud.get_adventurer(db, adventurer_id)
-    if adventurer is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Adventurer not found",
-        )
-
     try:
         updated = await adventurer_crud.update_adventurer(db, adventurer, data)
     except ValueError as exc:
@@ -51,20 +38,17 @@ async def update_adventurer(
     return adventurer_crud.to_adventurer_read(updated)
 
 
-@router.post("/{adventurer_id}/generate-lore", response_model=AdventurerRead)
-async def generate_adventurer_lore(
-    adventurer_id: int,
+@router.post("/me/generate-lore", response_model=AdventurerRead)
+async def generate_my_adventurer_lore(
+    adventurer: Adventurer = Depends(get_current_adventurer),
     db: AsyncSession = Depends(get_db),
 ) -> AdventurerRead:
-    adventurer = await adventurer_crud.get_adventurer(db, adventurer_id)
-    if adventurer is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Adventurer not found",
-        )
-
     try:
-        updated = await hero_lore_crud.refresh_adventurer_lore(db, adventurer)
+        updated = await hero_lore_crud.refresh_adventurer_lore(
+            db,
+            adventurer,
+            use_all_completed=True,
+        )
     except GeminiGenerationError as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
