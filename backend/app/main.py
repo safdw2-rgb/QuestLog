@@ -105,6 +105,7 @@ app.add_middleware(
         "http://127.0.0.1:3000",
         "https://questlog.pp.ua",
         "https://api.questlog.pp.ua",
+        "https://quest-log-chi-smoky.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
