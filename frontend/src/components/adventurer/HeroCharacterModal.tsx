@@ -11,6 +11,8 @@ interface HeroCharacterModalProps {
   adventurer: Adventurer;
   factions: Faction[];
   editMode: boolean;
+  selectedFactionId?: number | null;
+  onFactionFilterToggle?: (factionId: number) => void;
   onClose: () => void;
   onAdventurerUpdate: (adventurer: Adventurer) => void;
   onFactionsChange: () => Promise<void>;
@@ -22,6 +24,8 @@ export function HeroCharacterModal({
   adventurer,
   factions,
   editMode,
+  selectedFactionId = null,
+  onFactionFilterToggle,
   onClose,
   onAdventurerUpdate,
   onFactionsChange,
@@ -79,6 +83,15 @@ export function HeroCharacterModal({
             adventurer={adventurer}
             factions={factions}
             editMode={editMode}
+            selectedFactionId={selectedFactionId}
+            onFactionFilterToggle={
+              onFactionFilterToggle
+                ? (factionId) => {
+                    onFactionFilterToggle(factionId);
+                    onClose();
+                  }
+                : undefined
+            }
             onAdventurerUpdate={onAdventurerUpdate}
             onFactionsChange={onFactionsChange}
           />

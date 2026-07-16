@@ -11,6 +11,8 @@ interface HeroPanelProps {
   adventurer: Adventurer;
   factions: Faction[];
   editMode: boolean;
+  selectedFactionId?: number | null;
+  onFactionFilterToggle?: (factionId: number) => void;
   onAdventurerUpdate: (adventurer: Adventurer) => void;
   onFactionsChange: () => Promise<void>;
   onMentorStudentsChange?: (students: MentorStudent[]) => void;
@@ -20,6 +22,8 @@ export function HeroPanel({
   adventurer,
   factions,
   editMode,
+  selectedFactionId = null,
+  onFactionFilterToggle,
   onAdventurerUpdate,
   onFactionsChange,
   onMentorStudentsChange,
@@ -49,6 +53,8 @@ export function HeroPanel({
           adventurer={adventurer}
           factions={factions}
           editMode={editMode}
+          selectedFactionId={selectedFactionId}
+          onFactionFilterToggle={onFactionFilterToggle}
           onAdventurerUpdate={onAdventurerUpdate}
           onFactionsChange={onFactionsChange}
         />
@@ -66,6 +72,8 @@ export function HeroPanel({
         adventurer={adventurer}
         factions={factions}
         editMode={editMode}
+        selectedFactionId={selectedFactionId}
+        onFactionFilterToggle={onFactionFilterToggle}
         onClose={() => setModalOpen(false)}
         onAdventurerUpdate={onAdventurerUpdate}
         onFactionsChange={onFactionsChange}

@@ -55,6 +55,7 @@ const DEFAULT_CENTER: [number, number] = [49.423, 26.9871];
 interface WorldMapProps {
   quests: Quest[];
   factions?: Faction[];
+  selectedFactionId?: number | null;
   focusQuestId?: number | null;
   onFocusConsumed?: () => void;
   onNavigateToQuest: (quest: Quest) => void;
@@ -132,6 +133,7 @@ function FocusQuestPopup({
 export function WorldMap({
   quests,
   factions = [],
+  selectedFactionId = null,
   focusQuestId = null,
   onFocusConsumed,
   onNavigateToQuest,
@@ -152,9 +154,11 @@ export function WorldMap({
         (quest) =>
           quest.status === "active" &&
           isRootQuest(quest) &&
-          hasMapCoordinates(quest),
+          hasMapCoordinates(quest) &&
+          (selectedFactionId == null ||
+            quest.faction_id === selectedFactionId),
       ),
-    [quests],
+    [quests, selectedFactionId],
   );
 
   useEffect(() => {

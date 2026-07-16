@@ -60,7 +60,16 @@ export function QuestDashboard({
   const [focusQuestId, setFocusQuestId] = useState<number | null>(null);
   const [mapFocusQuestId, setMapFocusQuestId] = useState<number | null>(null);
   const [dateFilter, setDateFilter] = useState<DateFilter | null>(null);
+  const [selectedFactionId, setSelectedFactionId] = useState<number | null>(
+    null,
+  );
   const { editMode, setEditMode } = useEditMode();
+
+  const handleFactionFilterToggle = useCallback((factionId: number) => {
+    setSelectedFactionId((current) =>
+      current === factionId ? null : factionId,
+    );
+  }, []);
 
   const handleAdventurerUpdate = useCallback(
     (updated: Adventurer) => {
@@ -278,6 +287,8 @@ export function QuestDashboard({
           adventurer={adventurer}
           factions={factions}
           editMode={editMode}
+          selectedFactionId={selectedFactionId}
+          onFactionFilterToggle={handleFactionFilterToggle}
           onAdventurerUpdate={handleAdventurerUpdate}
           onFactionsChange={refreshFactions}
           onMentorStudentsChange={handleMentorStudentsChange}
@@ -315,6 +326,8 @@ export function QuestDashboard({
             <QuestJournal
               quests={quests}
               factions={factions}
+              selectedFactionId={selectedFactionId}
+              onFactionFilterClear={() => setSelectedFactionId(null)}
               updatingQuestId={updatingQuestId}
               dateFilter={dateFilter}
               onDateFilterChange={setDateFilter}
@@ -349,6 +362,8 @@ export function QuestDashboard({
             <RewardShop
               adventurer={adventurer}
               factions={factions}
+              selectedFactionId={selectedFactionId}
+              onFactionFilterClear={() => setSelectedFactionId(null)}
               editMode={editMode}
               onAdventurerUpdate={handleAdventurerUpdate}
               onEffectsRefresh={onEffectsRefresh}
@@ -357,6 +372,7 @@ export function QuestDashboard({
             <WorldMap
               quests={quests}
               factions={factions}
+              selectedFactionId={selectedFactionId}
               focusQuestId={mapFocusQuestId}
               onFocusConsumed={() => setMapFocusQuestId(null)}
               onNavigateToQuest={handleNavigateToQuest}

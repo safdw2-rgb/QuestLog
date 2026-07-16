@@ -34,6 +34,8 @@ import {
 interface QuestJournalProps {
   quests: Quest[];
   factions: Faction[];
+  selectedFactionId?: number | null;
+  onFactionFilterClear?: () => void;
   updatingQuestId?: number | null;
   dateFilter: DateFilter | null;
   onDateFilterChange: (filter: DateFilter | null) => void;
@@ -64,6 +66,8 @@ interface QuestJournalProps {
 export function QuestJournal({
   quests,
   factions,
+  selectedFactionId = null,
+  onFactionFilterClear,
   updatingQuestId = null,
   dateFilter,
   onDateFilterChange,
@@ -99,11 +103,23 @@ export function QuestJournal({
     [factions],
   );
 
+  const selectedFaction = useMemo(
+    () =>
+      selectedFactionId != null
+        ? factions.find((faction) => faction.id === selectedFactionId) ?? null
+        : null,
+    [factions, selectedFactionId],
+  );
+
   const filteredQuests = useMemo(() => {
-    const byTab = filterQuestsByTab(quests, activeTab);
+    const byFaction =
+      selectedFactionId == null
+        ? quests
+        : quests.filter((quest) => quest.faction_id === selectedFactionId);
+    const byTab = filterQuestsByTab(byFaction, activeTab);
     const byDate = filterQuestsByDateFilter(byTab, dateFilter);
     return sortQuests(byDate, sortBy, factionNames);
-  }, [quests, activeTab, dateFilter, sortBy, factionNames]);
+  }, [quests, selectedFactionId, activeTab, dateFilter, sortBy, factionNames]);
 
   const pagination = useMemo(
     () => paginateQuests(filteredQuests, page, QUEST_PAGE_SIZE),
@@ -112,7 +128,7 @@ export function QuestJournal({
 
   useEffect(() => {
     setPage(1);
-  }, [activeTab, dateFilter, sortBy]);
+  }, [activeTab, dateFilter, sortBy, selectedFactionId]);
 
   useEffect(() => {
     if (focusQuestId == null) {
@@ -132,15 +148,19 @@ export function QuestJournal({
     activeTab === "daily";
 
   const emptyMessage =
-    activeTab === "daily"
-      ? EMPTY_DAILY_TAB_MESSAGE
-      : activeTab === "all"
-        ? dateFilter
-          ? `Нет квестов для фильтра «${DATE_FILTER_LABELS[dateFilter]}».`
-          : EMPTY_ALL_TAB_MESSAGE
-        : dateFilter
-          ? `В этой вкладке ничего нет для «${DATE_FILTER_LABELS[dateFilter]}».`
-          : undefined;
+    selectedFaction != null
+      ? `Нет квестов фракции «${selectedFaction.name}»${
+          dateFilter ? ` для «${DATE_FILTER_LABELS[dateFilter]}»` : ""
+        }.`
+      : activeTab === "daily"
+        ? EMPTY_DAILY_TAB_MESSAGE
+        : activeTab === "all"
+          ? dateFilter
+            ? `Нет квестов для фильтра «${DATE_FILTER_LABELS[dateFilter]}».`
+            : EMPTY_ALL_TAB_MESSAGE
+          : dateFilter
+            ? `В этой вкладке ничего нет для «${DATE_FILTER_LABELS[dateFilter]}».`
+            : undefined;
 
   async function handleQuestCreated() {
     setRefreshing(true);
@@ -201,6 +221,28 @@ export function QuestJournal({
           aria-hidden
         />
       </div>
+
+      {selectedFaction && (
+        <div className="faction-filter-chip mb-3 flex shrink-0 items-center gap-2">
+          <span className="min-w-0 truncate text-xs text-[#3a2214]">
+            Фракция:{" "}
+            <span className="font-medium">
+              {selectedFaction.icon ? `${selectedFaction.icon} ` : ""}
+              {selectedFaction.name}
+            </span>
+          </span>
+          {onFactionFilterClear && (
+            <button
+              type="button"
+              className="faction-filter-chip-clear"
+              onClick={onFactionFilterClear}
+              aria-label="Сбросить фильтр фракции"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+      )}
 
       <div className="rpg-filter-nav mb-5 flex shrink-0 flex-row flex-nowrap overflow-x-auto items-center gap-x-5 gap-y-2 pb-1 md:flex-wrap" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
         {(["today", "tomorrow", "future"] as const).map((filter) => (

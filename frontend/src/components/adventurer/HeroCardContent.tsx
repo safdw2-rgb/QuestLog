@@ -16,6 +16,8 @@ interface HeroCardContentProps {
   adventurer: Adventurer;
   factions: Faction[];
   editMode: boolean;
+  selectedFactionId?: number | null;
+  onFactionFilterToggle?: (factionId: number) => void;
   onAdventurerUpdate: (adventurer: Adventurer) => void;
   onFactionsChange: () => Promise<void>;
   showFactions?: boolean;
@@ -26,6 +28,8 @@ export function HeroCardContent({
   adventurer,
   factions,
   editMode,
+  selectedFactionId = null,
+  onFactionFilterToggle,
   onAdventurerUpdate,
   onFactionsChange,
   showFactions = true,
@@ -288,6 +292,8 @@ export function HeroCardContent({
         <FactionManager
           factions={factions}
           editMode={editMode}
+          selectedFactionId={selectedFactionId}
+          onFactionFilterToggle={onFactionFilterToggle}
           onFactionsChange={onFactionsChange}
         />
       )}

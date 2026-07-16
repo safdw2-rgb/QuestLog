@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import { JournalSectionTitle } from "@/components/layout/JournalSectionTitle";
 import { RewardEditModal } from "@/components/rewards/RewardEditModal";
@@ -24,6 +24,8 @@ import type { Adventurer, Faction, Reward } from "@/lib/types";
 interface RewardShopProps {
   adventurer: Adventurer;
   factions: Faction[];
+  selectedFactionId?: number | null;
+  onFactionFilterClear?: () => void;
   editMode: boolean;
   onAdventurerUpdate: (adventurer: Adventurer) => void;
   onEffectsRefresh?: () => void;
@@ -32,6 +34,8 @@ interface RewardShopProps {
 export function RewardShop({
   adventurer,
   factions,
+  selectedFactionId = null,
+  onFactionFilterClear,
   editMode,
   onAdventurerUpdate,
   onEffectsRefresh,
@@ -81,6 +85,22 @@ export function RewardShop({
       cancelled = true;
     };
   }, []);
+
+  const selectedFaction = useMemo(
+    () =>
+      selectedFactionId != null
+        ? factions.find((faction) => faction.id === selectedFactionId) ?? null
+        : null,
+    [factions, selectedFactionId],
+  );
+
+  const visibleRewards = useMemo(
+    () =>
+      selectedFactionId == null
+        ? rewards
+        : rewards.filter((reward) => reward.faction_id === selectedFactionId),
+    [rewards, selectedFactionId],
+  );
 
   function resetForm() {
     setTitle("");
@@ -287,6 +307,28 @@ export function RewardShop({
         </p>
       </div>
 
+      {selectedFaction && (
+        <div className="faction-filter-chip mb-3 flex shrink-0 items-center gap-2">
+          <span className="min-w-0 truncate text-xs text-[#3a2214]">
+            Фракция:{" "}
+            <span className="font-medium">
+              {selectedFaction.icon ? `${selectedFaction.icon} ` : ""}
+              {selectedFaction.name}
+            </span>
+          </span>
+          {onFactionFilterClear && (
+            <button
+              type="button"
+              className="faction-filter-chip-clear"
+              onClick={onFactionFilterClear}
+              aria-label="Сбросить фильтр фракции"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+      )}
+
       {message && (
         <p className="mb-3 rounded-lg border border-emerald-300/50 bg-emerald-50/80 px-3 py-2 text-sm text-emerald-900">
           {message}
@@ -305,10 +347,15 @@ export function RewardShop({
         <div className="border border-dashed border-[#3a2214]/20 p-8 text-center text-[#4a3224]">
           Магазин пуст. {editMode ? "Добавьте первый товар." : ""}
         </div>
+      ) : visibleRewards.length === 0 ? (
+        <div className="border border-dashed border-[#3a2214]/20 p-8 text-center text-[#4a3224]">
+          Нет товаров фракции
+          {selectedFaction ? ` «${selectedFaction.name}»` : ""}.
+        </div>
       ) : (
         <div className="reward-shop-list-scroll rpg-fantasy-vscroll min-h-0 flex-1 overflow-y-auto">
           <ul className="flex flex-col gap-4">
-            {rewards.map((reward) => {
+            {visibleRewards.map((reward) => {
               const { faction, displayCost, adjustment } = getPricing(reward);
               const canAfford = adventurer.gold >= displayCost;
               const isBuying = purchasingId === reward.id;

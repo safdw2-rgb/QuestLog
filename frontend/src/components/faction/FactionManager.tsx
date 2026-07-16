@@ -11,6 +11,8 @@ import type { Faction } from "@/lib/types";
 interface FactionManagerProps {
   factions: Faction[];
   editMode: boolean;
+  selectedFactionId?: number | null;
+  onFactionFilterToggle?: (factionId: number) => void;
   onFactionsChange: () => Promise<void>;
   title?: string;
 }
@@ -25,6 +27,8 @@ const EMPTY_FORM: FactionFormState = { name: "", icon: "" };
 export function FactionManager({
   factions,
   editMode,
+  selectedFactionId = null,
+  onFactionFilterToggle,
   onFactionsChange,
   title = "Репутация на этой неделе",
 }: FactionManagerProps) {
@@ -119,48 +123,63 @@ export function FactionManager({
                 0,
                 Math.min(100, (faction.reputation_points / REP_MAX) * 100),
               );
+              const isSelected = selectedFactionId === faction.id;
 
               return (
-                <li
-                  key={faction.id}
-                  className="faction-row px-0 py-0.5 text-xs"
-                >
-                  <div className="flex items-center justify-between gap-1">
-                    <span className="min-w-0 truncate">
-                      {icon ? `${icon} ` : ""}
-                      {faction.name}
-                    </span>
-                    <div className="flex shrink-0 items-center gap-1.5">
-                      {editMode && (
-                        <button
-                          type="button"
-                          className="faction-edit-button"
-                          onClick={() => openEditModal(faction)}
-                          aria-label={`Редактировать ${faction.name}`}
-                          title="Редактировать"
-                        >
-                          ✏️
-                        </button>
-                      )}
-                      <span className="text-[10px] text-[#4a3224]/80">
-                        {getReputationLevel(faction.reputation_points)}
-                      </span>
-                    </div>
-                  </div>
+                <li key={faction.id}>
                   <div
-                    className="rpg-faction-bar-bg mt-0.5"
-                    role="progressbar"
-                    aria-valuenow={Math.round(repPct)}
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    aria-label={`Репутация ${faction.name}: ${faction.reputation_points} очков`}
+                    className={`faction-row flex items-start gap-1 px-1.5 py-1 text-xs ${
+                      isSelected ? "faction-row-selected" : ""
+                    } ${onFactionFilterToggle ? "faction-row-interactive" : ""}`}
                   >
-                    <div
-                      className="rpg-faction-bar-fill"
-                      style={{
-                        clipPath: `inset(0 ${100 - repPct}% 0 0)`,
-                      }}
-                    />
+                    <button
+                      type="button"
+                      className="faction-row-button min-w-0 flex-1 text-left"
+                      onClick={() => onFactionFilterToggle?.(faction.id)}
+                      aria-pressed={isSelected}
+                      title={
+                        isSelected
+                          ? "Сбросить фильтр фракции"
+                          : `Показать только «${faction.name}»`
+                      }
+                      disabled={!onFactionFilterToggle}
+                    >
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="min-w-0 truncate">
+                          {icon ? `${icon} ` : ""}
+                          {faction.name}
+                        </span>
+                        <span className="shrink-0 text-[10px] text-[#4a3224]/80">
+                          {getReputationLevel(faction.reputation_points)}
+                        </span>
+                      </div>
+                      <div
+                        className="rpg-faction-bar-bg mt-0.5"
+                        role="progressbar"
+                        aria-valuenow={Math.round(repPct)}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-label={`Репутация ${faction.name}: ${faction.reputation_points} очков`}
+                      >
+                        <div
+                          className="rpg-faction-bar-fill"
+                          style={{
+                            clipPath: `inset(0 ${100 - repPct}% 0 0)`,
+                          }}
+                        />
+                      </div>
+                    </button>
+                    {editMode && (
+                      <button
+                        type="button"
+                        className="faction-edit-button mt-0.5 shrink-0"
+                        onClick={() => openEditModal(faction)}
+                        aria-label={`Редактировать ${faction.name}`}
+                        title="Редактировать"
+                      >
+                        ✏️
+                      </button>
+                    )}
                   </div>
                 </li>
               );
