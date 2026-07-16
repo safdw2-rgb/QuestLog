@@ -68,7 +68,7 @@ export function HeroCharacterModal({
         aria-label="Закрыть"
       />
 
-      <div className="hero-character-panel journal-panel relative z-10 flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl">
+      <div className="hero-character-panel journal-panel relative z-10 flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl bg-parchment">
         <header className="shrink-0 border-b border-ink/10 px-5 py-4">
           <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">
             Карточка персонажа

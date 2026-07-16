@@ -200,7 +200,7 @@ export function FactionManager({
             onClick={closeModal}
             aria-label="Закрыть"
           />
-          <div className="journal-panel relative z-10 w-full max-w-md overflow-x-hidden rounded-t-2xl p-5 sm:rounded-xl">
+          <div className="quest-modal-panel journal-panel relative z-10 w-full max-w-md overflow-x-hidden rounded-t-2xl bg-parchment p-5 sm:rounded-xl">
             <h3 className="font-display text-xl text-ink">
               {editingFaction ? "Редактировать фракцию" : "Новая фракция"}
             </h3>

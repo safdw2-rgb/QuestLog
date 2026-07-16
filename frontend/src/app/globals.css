@@ -156,7 +156,8 @@
     border-image: none !important;
   }
 
-  .rpg-parchment-inner .journal-panel,
+  /* Keep floating modals opaque even when mounted under parchment. */
+  .rpg-parchment-inner .journal-panel:not(.hero-character-panel):not(.quest-modal-panel),
   .rpg-parchment-inner .magic-book-panel,
   .rpg-parchment-inner .quest-card,
   .rpg-parchment-inner .reward-shop-wallet,
@@ -170,6 +171,14 @@
     border: none !important;
     background: transparent !important;
     box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+
+  .rpg-parchment-inner .hero-character-panel.journal-panel,
+  .rpg-parchment-inner .quest-modal-panel.journal-panel {
+    border: 1px solid rgb(44 24 16 / 0.12) !important;
+    background: rgb(244 232 200 / 0.98) !important;
+    box-shadow: 0 12px 40px rgb(44 24 16 / 0.22) !important;
     backdrop-filter: none !important;
   }
 
@@ -1524,7 +1533,8 @@
   }
 
   .hero-character-panel {
-    box-shadow: 0 12px 40px rgb(44 24 16 / 0.18);
+    background: rgb(244 232 200 / 0.98);
+    box-shadow: 0 12px 40px rgb(44 24 16 / 0.22);
   }
 
   .theme-switcher-button {
