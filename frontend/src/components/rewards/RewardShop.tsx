@@ -317,7 +317,7 @@ export function RewardShop({
 
               return (
                 <li key={reward.id} className="reward-shop-scroll reward-shop-card">
-                  <div className="flex w-full flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between lg:h-full lg:gap-3 lg:px-14 lg:pt-8 lg:pb-7">
+                  <div className="flex w-full flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex min-w-0 flex-1 items-start gap-3 sm:items-center">
                       {/* Icon */}
                       <span
@@ -334,20 +334,18 @@ export function RewardShop({
                       </span>
 
                       {/* Title + description + faction */}
-                      <div className="flex min-w-0 flex-1 flex-col gap-0.5 lg:h-full lg:justify-between">
+                      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                         <h3 className="font-display text-base leading-snug text-[#2c1810] sm:truncate">
                           {reward.title}
                         </h3>
 
                         {reward.description ? (
-                          <div className="reward-shop-desc-scroll rpg-fantasy-vscroll-sm my-0.5 lg:min-h-0 lg:flex-1">
+                          <div className="reward-shop-desc-scroll rpg-fantasy-vscroll-sm my-0.5">
                             <p className="text-sm leading-snug text-[#4a3224]">
                               {reward.description}
                             </p>
                           </div>
-                        ) : (
-                          <div className="my-0.5 hidden lg:block lg:min-h-0 lg:flex-1" />
-                        )}
+                        ) : null}
 
                         {faction ? (
                           <p className="text-[11px] text-[#4a3224]/75 sm:truncate">
@@ -355,9 +353,7 @@ export function RewardShop({
                             {faction.name} ·{" "}
                             {getReputationLevel(faction.reputation_points)}
                           </p>
-                        ) : (
-                          <span className="hidden h-[14px] lg:block" aria-hidden />
-                        )}
+                        ) : null}
                       </div>
                     </div>
 

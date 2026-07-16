@@ -139,18 +139,26 @@
     backdrop-filter: none !important;
   }
 
-  @media (max-width: 1023px) {
-    .rpg-parchment-inner .reward-shop-scroll.reward-shop-card {
-      border: 1px solid rgb(120 53 15 / 0.2) !important;
-      border-radius: 0.375rem !important;
-      background-color: rgb(254 243 199 / 0.2) !important;
-    }
+  /* Shop lots: keep the same rounded card chrome on all viewports.
+     (Previously desktop 9-slice was stripped by parchment rules → “floating” rows.) */
+  .rpg-parchment-inner .reward-shop-scroll.reward-shop-card {
+    border: 1px solid rgb(120 53 15 / 0.2) !important;
+    border-radius: 0.375rem !important;
+    background-color: rgb(254 243 199 / 0.2) !important;
+    border-image: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .rpg-parchment-inner .reward-shop-scroll.reward-shop-card:hover {
+    border-image: none !important;
   }
 
   .rpg-parchment-inner .journal-panel,
   .rpg-parchment-inner .magic-book-panel,
   .rpg-parchment-inner .quest-card,
-  .rpg-parchment-inner .reward-shop-card,
   .rpg-parchment-inner .reward-shop-wallet,
   .rpg-parchment-inner .reward-shop-icon,
   .rpg-parchment-inner .mentorship-invite-block,
@@ -941,7 +949,7 @@
   }
 
   /* ── Reward shop item row ─────────────────────────────────────────── */
-  /* Mobile: plain card. Desktop (lg+): UI_ListItem2 scroll 9-slice. */
+  /* Same rounded card on mobile and desktop (matches mobile shop look). */
   .reward-shop-scroll {
     box-sizing: border-box;
     width: 100%;
@@ -953,27 +961,6 @@
     background-color: rgb(254 243 199 / 0.2);
     overflow: visible;
     list-style: none;
-  }
-
-  @media (min-width: 1024px) {
-    .reward-shop-scroll {
-      height: 200px;
-      min-height: 200px;
-      max-height: 200px;
-      border-style: solid;
-      border-width: 14px 24px;
-      border-radius: 0;
-      border-image-source: url('/rpg-ui/Lists/UI_ListItem2_Normal.png');
-      border-image-slice: 20 fill;
-      border-image-width: 14px 24px;
-      border-image-repeat: stretch;
-      background-color: transparent;
-      overflow: hidden;
-    }
-
-    .reward-shop-scroll:hover {
-      border-image-source: url('/rpg-ui/Lists/UI_ListItem2_Hover.png');
-    }
   }
 
   .reward-shop-icon-slot {
@@ -1025,14 +1012,6 @@
     overflow-y: visible;
     padding-right: 0;
     -webkit-overflow-scrolling: touch;
-  }
-
-  @media (min-width: 1024px) {
-    .reward-shop-desc-scroll {
-      max-height: 85px;
-      overflow-y: auto;
-      padding-right: 0.2rem;
-    }
   }
 
   .quest-journal-list-scroll {
