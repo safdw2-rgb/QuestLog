@@ -998,7 +998,9 @@
       overflow: hidden;
     }
 
-    .reward-shop-root .reward-shop-list-scroll {
+    /* Cap list scroll at hero-panel height; grow with content until then */
+    .reward-shop-root .reward-shop-list-scroll,
+    .quest-journal-root .quest-journal-list-scroll {
       flex: 1 1 auto;
       min-height: 0;
       max-height: none;

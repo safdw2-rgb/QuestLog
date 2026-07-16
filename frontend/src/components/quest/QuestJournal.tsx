@@ -156,8 +156,8 @@ export function QuestJournal({
   }
 
   return (
-    <div className="w-full min-w-0 box-border">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+    <div className="quest-journal-root flex min-h-0 w-full min-w-0 flex-1 flex-col box-border">
+      <div className="mb-4 flex shrink-0 flex-wrap items-center justify-between gap-3">
         <JournalSectionTitle>{title}</JournalSectionTitle>
         <div className="flex items-center gap-2">
           <button
@@ -189,7 +189,7 @@ export function QuestJournal({
       </div>
 
       {/* Scroll hint: fade on right edge shows there are more tabs to swipe */}
-      <div className="relative">
+      <div className="relative shrink-0">
         <QuestJournalTabs
           activeTab={activeTab}
           quests={quests}
@@ -202,7 +202,7 @@ export function QuestJournal({
         />
       </div>
 
-      <div className="rpg-filter-nav mb-5 flex flex-row flex-nowrap overflow-x-auto items-center gap-x-5 gap-y-2 pb-1 md:flex-wrap" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
+      <div className="rpg-filter-nav mb-5 flex shrink-0 flex-row flex-nowrap overflow-x-auto items-center gap-x-5 gap-y-2 pb-1 md:flex-wrap" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
         {(["today", "tomorrow", "future"] as const).map((filter) => (
           <button
             key={filter}
@@ -238,10 +238,10 @@ export function QuestJournal({
       </div>
 
       {refreshing && (
-        <p className="mb-3 text-xs text-ink-muted">Обновляем список...</p>
+        <p className="mb-3 shrink-0 text-xs text-ink-muted">Обновляем список...</p>
       )}
 
-      <div className="quest-journal-list-scroll rpg-fantasy-vscroll">
+      <div className="quest-journal-list-scroll rpg-fantasy-vscroll min-h-0 flex-1 overflow-y-auto">
         <QuestList
           quests={pagination.items}
           allQuests={quests}
