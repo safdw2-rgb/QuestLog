@@ -322,7 +322,6 @@ export function QuestCard({
         >
           {faction && (
             <p className="text-xs text-ink-muted">
-              {faction.icon ? `${faction.icon} ` : ""}
               {faction.name} · {getReputationLevel(faction.reputation_points)} (
               {faction.reputation_points} очк. на неделе)
             </p>
