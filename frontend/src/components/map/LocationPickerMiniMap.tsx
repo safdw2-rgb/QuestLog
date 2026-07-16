@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import {
   MapContainer,
@@ -33,26 +33,36 @@ function MapClickHandler({
 }: {
   onPick: (latitude: number, longitude: number) => void;
 }) {
+  const onPickRef = useRef(onPick);
+  onPickRef.current = onPick;
+
   useMapEvents({
     click(event) {
-      onPick(event.latlng.lat, event.latlng.lng);
+      onPickRef.current(event.latlng.lat, event.latlng.lng);
     },
   });
+
   return null;
 }
 
+/** Moves the map only when `token` changes (Find me / Clear / initial). */
 function MapViewController({
   center,
   zoom,
+  token,
 }: {
   center: [number, number];
   zoom: number;
+  token: number;
 }) {
   const map = useMap();
 
   useEffect(() => {
+    if (token < 0) {
+      return;
+    }
     map.setView(center, zoom, { animate: true });
-  }, [map, center, zoom]);
+  }, [map, center, zoom, token]);
 
   return null;
 }
@@ -63,10 +73,20 @@ export function LocationPickerMiniMap({
   onChange,
 }: LocationPickerMiniMapProps) {
   const hasPosition = latitude != null && longitude != null;
-  const [viewCenter, setViewCenter] = useState<[number, number]>(DEFAULT_CENTER);
+  const initialCenter: [number, number] =
+    hasPosition ? [latitude!, longitude!] : DEFAULT_CENTER;
+
+  const [viewCenter, setViewCenter] = useState<[number, number]>(initialCenter);
   const [viewZoom, setViewZoom] = useState(DEFAULT_ZOOM);
+  const [viewToken, setViewToken] = useState(0);
   const [locating, setLocating] = useState(false);
   const [locateError, setLocateError] = useState<string | null>(null);
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+
+  const placeMarker = useCallback((lat: number, lng: number) => {
+    onChangeRef.current(lat, lng);
+  }, []);
 
   const handleFindMe = useCallback(() => {
     if (!navigator.geolocation) {
@@ -85,7 +105,8 @@ export function LocationPickerMiniMap({
         ];
         setViewCenter(nextCenter);
         setViewZoom(DEFAULT_ZOOM);
-        onChange(nextCenter[0], nextCenter[1]);
+        setViewToken((token) => token + 1);
+        onChangeRef.current(nextCenter[0], nextCenter[1]);
         setLocating(false);
       },
       () => {
@@ -94,31 +115,44 @@ export function LocationPickerMiniMap({
       },
       { enableHighAccuracy: true, timeout: 10_000, maximumAge: 60_000 },
     );
-  }, [onChange]);
+  }, []);
 
   function handleClearLocation() {
-    onChange(null, null);
+    onChangeRef.current(null, null);
     setViewCenter(DEFAULT_CENTER);
     setViewZoom(DEFAULT_ZOOM);
+    setViewToken((token) => token + 1);
   }
 
   return (
     <div className="location-picker-mini w-full max-w-full overflow-hidden">
       <div className="location-picker-map-wrap relative w-full max-w-full overflow-hidden">
         <MapContainer
-          center={DEFAULT_CENTER}
+          center={initialCenter}
           zoom={DEFAULT_ZOOM}
           scrollWheelZoom={false}
           className="location-picker-mini-map"
           attributionControl={false}
         >
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-          <MapViewController center={viewCenter} zoom={viewZoom} />
-          <MapClickHandler
-            onPick={(lat, lng) => onChange(lat, lng)}
+          <MapViewController
+            center={viewCenter}
+            zoom={viewZoom}
+            token={viewToken}
           />
+          <MapClickHandler onPick={placeMarker} />
           {hasPosition && (
-            <Marker position={[latitude!, longitude!]} icon={pickerIcon} />
+            <Marker
+              position={[latitude!, longitude!]}
+              icon={pickerIcon}
+              draggable
+              eventHandlers={{
+                dragend: (event) => {
+                  const next = event.target.getLatLng();
+                  placeMarker(next.lat, next.lng);
+                },
+              }}
+            />
           )}
         </MapContainer>
 

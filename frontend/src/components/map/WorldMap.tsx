@@ -72,15 +72,23 @@ function hasMapCoordinates(quest: Quest): quest is Quest & {
 function MapRecenter({
   center,
   zoom,
+  recenterKey,
 }: {
   center: [number, number];
   zoom: number;
+  /** Changes only when we intentionally re-center (geo ready / focus quest). */
+  recenterKey: string;
 }) {
   const map = useMap();
+  const lastKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
+    if (lastKeyRef.current === recenterKey) {
+      return;
+    }
+    lastKeyRef.current = recenterKey;
     map.flyTo(center, zoom, { duration: 1 });
-  }, [map, center, zoom]);
+  }, [map, center, zoom, recenterKey]);
 
   return null;
 }
@@ -199,6 +207,27 @@ export function WorldMap({
           ? 8
           : 11;
 
+  const recenterKey = focusQuestId
+    ? `focus-${focusQuestId}`
+    : userCenter
+      ? `user-${userCenter[0].toFixed(5)},${userCenter[1].toFixed(5)}`
+      : "default";
+
+  const markerIcons = useMemo(() => {
+    const icons = new Map<number, L.DivIcon>();
+    for (const quest of mapQuests) {
+      const faction =
+        quest.faction_id != null
+          ? factionById.get(quest.faction_id)
+          : undefined;
+      icons.set(
+        quest.id,
+        createQuestMapIcon(resolveQuestFactionEmoji(faction?.icon)),
+      );
+    }
+    return icons;
+  }, [mapQuests, factionById]);
+
   return (
     <div className="world-map-panel journal-panel overflow-hidden">
       <header className="border-b border-ink/10 px-4 py-4 md:px-6">
@@ -223,26 +252,23 @@ export function WorldMap({
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          {!focusQuestId && <MapRecenter center={center} zoom={zoom} />}
+          {!focusQuestId && (
+            <MapRecenter
+              center={center}
+              zoom={zoom}
+              recenterKey={recenterKey}
+            />
+          )}
           <FocusQuestPopup
             focusQuestId={focusQuestId}
             markerRefs={markerRefs}
             onFocusConsumed={onFocusConsumed}
           />
-          {mapQuests.map((quest) => {
-            const faction =
-              quest.faction_id != null
-                ? factionById.get(quest.faction_id)
-                : undefined;
-            const markerIcon = createQuestMapIcon(
-              resolveQuestFactionEmoji(faction?.icon),
-            );
-
-            return (
+          {mapQuests.map((quest) => (
             <Marker
               key={quest.id}
               position={[quest.latitude!, quest.longitude!]}
-              icon={markerIcon}
+              icon={markerIcons.get(quest.id)}
               ref={(instance) => {
                 markerRefs.current[quest.id] = instance;
               }}
@@ -260,8 +286,7 @@ export function WorldMap({
                 </div>
               </Popup>
             </Marker>
-            );
-          })}
+          ))}
         </MapContainer>
       </div>
 
