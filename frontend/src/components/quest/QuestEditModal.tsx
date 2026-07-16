@@ -378,7 +378,8 @@ export function QuestEditModal({
               </div>
             )}
 
-            <Field label="Локация на карте">
+            {/* as="div": label must not wrap the map — clicks would activate 📍 Find me */}
+            <Field label="Локация на карте" as="div">
               <LocationPickerMiniMap
                 latitude={form.latitude}
                 longitude={form.longitude}
@@ -423,18 +424,21 @@ function Field({
   label,
   required,
   children,
+  as = "label",
 }: {
   label: string;
   required?: boolean;
   children: React.ReactNode;
+  as?: "label" | "div";
 }) {
+  const Wrapper = as;
   return (
-    <label className="block">
+    <Wrapper className="block">
       <span className="mb-1.5 block text-xs uppercase tracking-wide text-ink-muted">
         {label}
         {required && <span className="text-gold"> *</span>}
       </span>
       {children}
-    </label>
+    </Wrapper>
   );
 }

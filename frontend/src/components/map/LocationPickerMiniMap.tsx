@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type MouseEvent as ReactMouseEvent,
+} from "react";
 import L from "leaflet";
 import {
   MapContainer,
@@ -73,10 +79,13 @@ export function LocationPickerMiniMap({
   onChange,
 }: LocationPickerMiniMapProps) {
   const hasPosition = latitude != null && longitude != null;
-  const initialCenter: [number, number] =
-    hasPosition ? [latitude!, longitude!] : DEFAULT_CENTER;
+  // Stable MapContainer center — changing `center` prop remounts the map.
+  const mapCenterRef = useRef<[number, number]>(
+    hasPosition ? [latitude!, longitude!] : DEFAULT_CENTER,
+  );
 
-  const [viewCenter, setViewCenter] = useState<[number, number]>(initialCenter);
+  const [viewCenter, setViewCenter] =
+    useState<[number, number]>(mapCenterRef.current);
   const [viewZoom, setViewZoom] = useState(DEFAULT_ZOOM);
   const [viewToken, setViewToken] = useState(0);
   const [locating, setLocating] = useState(false);
@@ -88,7 +97,10 @@ export function LocationPickerMiniMap({
     onChangeRef.current(lat, lng);
   }, []);
 
-  const handleFindMe = useCallback(() => {
+  const handleFindMe = useCallback((event?: ReactMouseEvent) => {
+    event?.preventDefault();
+    event?.stopPropagation();
+
     if (!navigator.geolocation) {
       setLocateError("Геолокация недоступна в этом браузере");
       return;
@@ -117,7 +129,9 @@ export function LocationPickerMiniMap({
     );
   }, []);
 
-  function handleClearLocation() {
+  function handleClearLocation(event?: ReactMouseEvent) {
+    event?.preventDefault();
+    event?.stopPropagation();
     onChangeRef.current(null, null);
     setViewCenter(DEFAULT_CENTER);
     setViewZoom(DEFAULT_ZOOM);
@@ -128,7 +142,7 @@ export function LocationPickerMiniMap({
     <div className="location-picker-mini w-full max-w-full overflow-hidden">
       <div className="location-picker-map-wrap relative w-full max-w-full overflow-hidden">
         <MapContainer
-          center={initialCenter}
+          center={mapCenterRef.current}
           zoom={DEFAULT_ZOOM}
           scrollWheelZoom={false}
           className="location-picker-mini-map"
