@@ -356,6 +356,7 @@ export function QuestDashboard({
           ) : (
             <WorldMap
               quests={quests}
+              factions={factions}
               focusQuestId={mapFocusQuestId}
               onFocusConsumed={() => setMapFocusQuestId(null)}
               onNavigateToQuest={handleNavigateToQuest}

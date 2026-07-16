@@ -16,23 +16,45 @@ import {
   useMap,
 } from "react-leaflet";
 
+import { resolveQuestFactionEmoji } from "@/lib/rpg-assets";
 import { isRootQuest } from "@/lib/quest-utils";
-import type { Quest } from "@/lib/types";
+import type { Faction, Quest } from "@/lib/types";
 
 import "leaflet/dist/leaflet.css";
 
-const questIcon = L.divIcon({
-  className: "world-map-marker",
-  html: '<span aria-hidden="true">⚔️</span>',
-  iconSize: [28, 28],
-  iconAnchor: [14, 14],
-  popupAnchor: [0, -12],
-});
+function escapeHtml(text: string): string {
+  return text
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+function createQuestMapIcon(factionEmoji: string | null): L.DivIcon {
+  if (factionEmoji) {
+    return L.divIcon({
+      className: "world-map-marker",
+      html: `<span aria-hidden="true">${escapeHtml(factionEmoji)}</span>`,
+      iconSize: [28, 28],
+      iconAnchor: [14, 14],
+      popupAnchor: [0, -12],
+    });
+  }
+
+  return L.divIcon({
+    className: "world-map-marker world-map-marker-plain",
+    html: '<span class="world-map-marker-dot" aria-hidden="true"></span>',
+    iconSize: [16, 16],
+    iconAnchor: [8, 8],
+    popupAnchor: [0, -8],
+  });
+}
 
 const DEFAULT_CENTER: [number, number] = [49.423, 26.9871];
 
 interface WorldMapProps {
   quests: Quest[];
+  factions?: Faction[];
   focusQuestId?: number | null;
   onFocusConsumed?: () => void;
   onNavigateToQuest: (quest: Quest) => void;
@@ -101,6 +123,7 @@ function FocusQuestPopup({
 
 export function WorldMap({
   quests,
+  factions = [],
   focusQuestId = null,
   onFocusConsumed,
   onNavigateToQuest,
@@ -109,6 +132,11 @@ export function WorldMap({
 }: WorldMapProps) {
   const markerRefs = useRef<Record<number, L.Marker | null>>({});
   const [userCenter, setUserCenter] = useState<[number, number] | null>(null);
+
+  const factionById = useMemo(
+    () => new Map(factions.map((faction) => [faction.id, faction])),
+    [factions],
+  );
 
   const mapQuests = useMemo(
     () =>
@@ -201,11 +229,20 @@ export function WorldMap({
             markerRefs={markerRefs}
             onFocusConsumed={onFocusConsumed}
           />
-          {mapQuests.map((quest) => (
+          {mapQuests.map((quest) => {
+            const faction =
+              quest.faction_id != null
+                ? factionById.get(quest.faction_id)
+                : undefined;
+            const markerIcon = createQuestMapIcon(
+              resolveQuestFactionEmoji(faction?.icon),
+            );
+
+            return (
             <Marker
               key={quest.id}
               position={[quest.latitude!, quest.longitude!]}
-              icon={questIcon}
+              icon={markerIcon}
               ref={(instance) => {
                 markerRefs.current[quest.id] = instance;
               }}
@@ -223,7 +260,8 @@ export function WorldMap({
                 </div>
               </Popup>
             </Marker>
-          ))}
+            );
+          })}
         </MapContainer>
       </div>
 

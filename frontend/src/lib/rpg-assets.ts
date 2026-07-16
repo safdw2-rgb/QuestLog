@@ -1,6 +1,3 @@
-import type { Quest } from "@/lib/types";
-import { getDifficultyLevel } from "@/lib/difficulty";
-
 /** Фоновые ассеты скевоморфной темы (public/rpg-ui/ui-theme). */
 export const RPG_UI_THEME = {
   libraryBg: "/rpg-ui/ui-theme/UI_Image_Bg.png",
@@ -53,53 +50,12 @@ export function potionForEffect(effectId: number): string {
   return icons[effectId % icons.length];
 }
 
-type QuestIconSource = Pick<Quest, "difficulty" | "status" | "quest_type">;
-
-export function resolveQuestIconSrc(
-  quest: QuestIconSource,
-  options: { isFailedTab?: boolean } = {},
-): string {
-  if (options.isFailedTab || quest.status === "failed") {
-    return RPG_UI.skull;
-  }
-
-  const tier = getDifficultyLevel(quest.difficulty).tier;
-
-  if (tier === "legendary") {
-    return RPG_UI.skull;
-  }
-  if (tier === "trial") {
-    return RPG_UI.crossedSwords;
-  }
-  if (tier === "errand") {
-    return RPG_UI.compass;
-  }
-
-  return RPG_UI.questScroll;
-}
-
-export function resolveQuestIconFallback(
-  quest: QuestIconSource,
-  factionIcon: string | null,
-  options: { isFailedTab?: boolean } = {},
-): string {
-  if (options.isFailedTab || quest.status === "failed") {
-    return "💀";
-  }
-
-  const tier = getDifficultyLevel(quest.difficulty).tier;
-
-  if (tier === "legendary") {
-    return "💀";
-  }
-  if (tier === "trial") {
-    return "⚔️";
-  }
-  if (tier === "errand") {
-    return "🧭";
-  }
-
-  return factionIcon ?? "📜";
+/** Explicit faction emoji for quest cards/markers; null → no icon. */
+export function resolveQuestFactionEmoji(
+  factionIcon: string | null | undefined,
+): string | null {
+  const trimmed = factionIcon?.trim();
+  return trimmed ? trimmed : null;
 }
 
 export function resolveRewardIconSrc(cost: number, rewardId: number): string {

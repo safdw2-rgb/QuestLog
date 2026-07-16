@@ -1224,6 +1224,19 @@
     line-height: 1;
   }
 
+  .world-map-marker-plain {
+    border-width: 1.5px;
+    background: rgb(244 232 200 / 0.9);
+  }
+
+  .world-map-marker-dot {
+    display: block;
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+    background: rgb(139 105 20 / 0.85);
+  }
+
   .world-map-popup {
     min-width: 10rem;
   }

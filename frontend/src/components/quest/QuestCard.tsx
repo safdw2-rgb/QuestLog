@@ -10,8 +10,7 @@ import { QuestSubquests } from "@/components/quest/QuestSubquests";
 import { useNow } from "@/hooks/useNow";
 import { RpgIcon } from "@/components/rpg/RpgIcon";
 import { getDifficultyLevel } from "@/lib/difficulty";
-import { resolveFactionIcon } from "@/lib/faction-utils";
-import { RPG_UI, resolveQuestIconFallback, resolveQuestIconSrc } from "@/lib/rpg-assets";
+import { RPG_UI, resolveQuestFactionEmoji } from "@/lib/rpg-assets";
 import {
   formatDeadlineDateTime,
   formatReminderTime,
@@ -112,11 +111,7 @@ export function QuestCard({
     currentUserId != null &&
     quest.creator_user_id !== currentUserId;
   const canEdit = isActive && Boolean(onEdit) && !isMentorQuest;
-  const factionIcon = faction ? resolveFactionIcon(faction) : null;
-  const questIconSrc = resolveQuestIconSrc(quest, { isFailedTab });
-  const questIconFallback = resolveQuestIconFallback(quest, factionIcon, {
-    isFailedTab,
-  });
+  const factionEmoji = resolveQuestFactionEmoji(faction?.icon);
   const difficultyTier = getDifficultyLevel(quest.difficulty).tier;
 
   const questState: string | undefined = showDailyDoneState
@@ -237,16 +232,14 @@ export function QuestCard({
           ▸
         </span>
 
-        {/* Quest-type icon wrapped in inventory slot */}
-        <span className="rpg-quest-icon-slot" aria-hidden>
-          <RpgIcon
-            src={questIconSrc}
-            fallbackEmoji={questIconFallback}
-            alt=""
-            className="inline-block h-4 w-4 shrink-0 object-contain"
-            fallbackClassName="quest-faction-emoji shrink-0 text-sm"
-          />
-        </span>
+        {/* Faction emoji in inventory slot; omitted when quest has no faction icon */}
+        {factionEmoji ? (
+          <span className="rpg-quest-icon-slot" aria-hidden>
+            <span className="quest-faction-emoji shrink-0 text-sm leading-none">
+              {factionEmoji}
+            </span>
+          </span>
+        ) : null}
 
         <div className="min-w-0 flex-1">
           <h3 className="flex min-w-0 items-center font-display text-sm leading-snug text-ink transition-all duration-300 sm:text-base">
