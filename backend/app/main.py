@@ -7,6 +7,7 @@ from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 
 from app.api.adventurers import router as adventurers_router
 from app.api.auth import router as auth_router
@@ -16,6 +17,7 @@ from app.api.mentor import router as mentor_router
 from app.api.quests import router as quests_router
 from app.api.rewards import router as rewards_router
 from app.config import settings
+from app.db.session import async_session_factory
 from app.services.active_effect_expiry import check_expired_effects
 from app.services.daily_quest_reset import reset_daily_quests
 from app.services.faction_season_report import faction_season_service
@@ -123,4 +125,11 @@ app.include_router(mentor_router, prefix="/api/v1")
 
 @app.get("/health")
 async def health() -> dict[str, str]:
-    return {"status": "ok"}
+    """Liveness + DB ping so keep-alive jobs also warm Neon compute."""
+    try:
+        async with async_session_factory() as session:
+            await session.execute(text("SELECT 1"))
+        return {"status": "ok", "database": "ok"}
+    except Exception as exc:
+        logger.warning("health check: database unavailable: %s", exc)
+        return {"status": "degraded", "database": "error"}
